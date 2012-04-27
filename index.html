@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html><head><link href="css/default.css" rel="stylesheet" type="text/css"><script src="js/jquery.min.js" type="text/javascript"></script><script src="js/page_effects.js" type="text/javascript"></script><title>Pallet-fsmop 0.1.0-SNAPSHOT API documentation</title></head><body><div id="header"><h1><a href="index.html">Pallet-fsmop 0.1.0-SNAPSHOT API documentation</a></h1></div><div class="sidebar" id="namespaces"><h3><span>Namespaces</span></h3><ul><li><a href="pallet.algo.fsmop.html"><span>pallet.algo.fsmop</span></a></li></ul></div><div class="namespace-index" id="content"><h2>Pallet-fsmop 0.1.0-SNAPSHOT API documentation</h2><div class="doc">FSM composition</div><div class="namespace"><h3><a href="pallet.algo.fsmop.html"><span>pallet.algo.fsmop</span></a></h3><pre class="doc">Operations
+
+Operate provides orchestration. It assumes that operations can succeed, fail,
+time-out or be aborted. It assumes some things happen in parallel, and that some
+things need to be sequenced.
+
+
+## Operation primitive FSM contract
+
+An operation primitive must produce a FSM specification.
+
+The FSM must respond to the :start event in it's initial state. The event data
+sent with the :start event will be the current global state. The default initial
+state is :init. The default response for the :start event in the :init state is
+to set the primitive's :state-data to the global state, and to transition to
+the :running state.
+
+The FSM must have a :completed and a :failed state.
+
+It must respond to the :abort event, which is sent on a user initiated abort
+of an operation. The :abort event should cause the FSM to end in the :aborted
+state.
+
+The :init, :completed, :aborted and :failed states will be implicitly added if
+not declared.
+
+The result should be placed on the :result key of the state-data.
+
+A failure reason should be placed on the :fail-reason key of the state-data.
+
+State event functions (on-enter and on-exit) should return true if they do
+anything to change the state of the FSM, and further event functions should not
+be called for the transition.
+
+
+## The `operation` FSM comprehension
+
+An expression under the `operation` FSM comprehension results in a compound
+FSM. It is returned as a function, that takes a state, and returns a map of
+functions to control the resulting FSM.</pre><div class="index"><p>Public variables and functions:</p><ul><li><a href="pallet.algo.fsmop.html#var-Control"><span>Control</span></a></li><li><a href="pallet.algo.fsmop.html#var-abort"><span>abort</span></a></li><li><a href="pallet.algo.fsmop.html#var-complete%3F"><span>complete?</span></a></li><li><a href="pallet.algo.fsmop.html#var-default-init-event-handler"><span>default-init-event-handler</span></a></li><li><a href="pallet.algo.fsmop.html#var-delay-for"><span>delay-for</span></a></li><li><a href="pallet.algo.fsmop.html#var-dofsm"><span>dofsm</span></a></li><li><a href="pallet.algo.fsmop.html#var-eval-in-env-fn"><span>eval-in-env-fn</span></a></li><li><a href="pallet.algo.fsmop.html#var-execute"><span>execute</span></a></li><li><a href="pallet.algo.fsmop.html#var-execute-after"><span>execute-after</span></a></li><li><a href="pallet.algo.fsmop.html#var-fail"><span>fail</span></a></li><li><a href="pallet.algo.fsmop.html#var-failed%3F"><span>failed?</span></a></li><li><a href="pallet.algo.fsmop.html#var-map*"><span>map*</span></a></li><li><a href="pallet.algo.fsmop.html#var-merge-fsms"><span>merge-fsms</span></a></li><li><a href="pallet.algo.fsmop.html#var-operate"><span>operate</span></a></li><li><a href="pallet.algo.fsmop.html#var-report-operation"><span>report-operation</span></a></li><li><a href="pallet.algo.fsmop.html#var-result"><span>result</span></a></li><li><a href="pallet.algo.fsmop.html#var-seq-steps"><span>seq-steps</span></a></li><li><a href="pallet.algo.fsmop.html#var-set-in-env-fn"><span>set-in-env-fn</span></a></li><li><a href="pallet.algo.fsmop.html#var-status"><span>status</span></a></li><li><a href="pallet.algo.fsmop.html#var-succeed"><span>succeed</span></a></li><li><a href="pallet.algo.fsmop.html#var-timeout"><span>timeout</span></a></li><li><a href="pallet.algo.fsmop.html#var-update-state"><span>update-state</span></a></li><li><a href="pallet.algo.fsmop.html#var-wait-for"><span>wait-for</span></a></li></ul></div></div></div></body></html>
