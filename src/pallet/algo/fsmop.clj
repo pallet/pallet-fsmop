@@ -519,19 +519,6 @@ functions to control the resulting FSM.
   [state]
   ((-> state :em :event) :fail nil))
 
-(defn- operate-on-completed
-  [{:keys [state-kw] :as state}]
-  (deliver
-   (get-in state [:state-data op-promise-key])
-   ((get-in state [:state-data op-overall-result-key])
-    (get-in state [:state-data op-env-key]))))
-
-(defn- operate-on-failed
-  [{:keys [state-kw] :as state}]
-  (deliver
-   (get-in state [:state-data op-promise-key])
-   (get-in state [:state-data :fail-reason])))
-
 ;;; ### sequential FSM
 (defn seq-fsm [op-name {:keys [steps result-f]}]
   (event-machine-config
@@ -557,16 +544,7 @@ functions to control the resulting FSM.
     (state :step-failed
       (valid-transitions :failed :aborted)
       (on-enter operate-on-step-failed)
-      (event-handler operate-step-failed))
-    (state :completed
-      (valid-transitions :completed)
-      (on-enter operate-on-completed))
-    (state :failed
-      (valid-transitions :failed)
-      (on-enter operate-on-failed))
-    (state :failed
-      (valid-transitions :aborted)
-      (on-enter operate-on-failed))))
+      (event-handler operate-step-failed))))
 
 ;;; ### FSM step conversion
 (defn ^{:internal true} symbols
@@ -640,9 +618,7 @@ the form in the given environment."
   [op-name steps result]
   `(seq-fsm ~(name op-name) ~(seq-steps steps result)))
 
-
-
-;;; ## User visible interface
+;;; ## User visible execution interface
 (defprotocol Control
   "Operation control protocol."
   (abort [_] "Abort the operation.")
@@ -663,20 +639,42 @@ the form in the given environment."
   clojure.lang.IDeref
   (deref [_] @completed-promise))
 
+(defn- operate-on-completed
+  [{:keys [state-kw] :as state}]
+  (deliver
+   (get-in state [:state-data op-promise-key])
+   ((get-in state [:state-data op-overall-result-key])
+    (get-in state [:state-data op-env-key]))))
+
+(defn- operate-on-failed
+  [{:keys [state-kw] :as state}]
+  (deliver
+   (get-in state [:state-data op-promise-key])
+   (get-in state [:state-data :fail-reason])))
+
+(def operate-machine-config
+  (event-machine-config
+    (state :completed
+      (valid-transitions :completed)
+      (on-enter operate-on-completed))
+    (state :failed
+      (valid-transitions :failed)
+      (on-enter operate-on-failed))
+    (state :aborted
+      (valid-transitions :aborted)
+      (on-enter operate-on-failed))
+    (state :timed-out
+      (valid-transitions :timed-out)
+      (on-enter operate-on-failed))))
+
 (defn operate
   "Start the specified `operation` on the given arguments. The call returns an
   object that implements the Control protocol."
   [operation]
   (let [completed-promise (promise)
-        {:keys [event] :as fsm} (event-machine operation)]
-;;TODO wire result here, so operate can run with arbitrary machines, not just
-;;seq*
+        {:keys [event] :as fsm} (event-machine
+                                 (merge-fsms operation operate-machine-config))]
     (event :start {op-promise-key completed-promise})
-    ;; (when-not (= (count (:args operation)) (count args))
-    ;;   (throw
-    ;;    (IllegalArgumentException.
-    ;;     (str "Operation " (:op-name operation)
-    ;;          " expects " (vec (:args operation))))))
     (Operation. fsm completed-promise)))
 
 (defn report-operation
