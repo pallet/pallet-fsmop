@@ -16,12 +16,14 @@ FSM's are built as functions, and then executed using the `operate` function,
 which returns a data-structure. The return data-structure can be deref'd to
 block until completion.
 
+### `dofsm` comprehension
+
 The library comes with a comprehension `dofsm` for building FSMs. In this first
-example, we use the `result` fsm, which takes a non-fsm value and creates a fsm
-that returns it.
+example, we use the `result` FSM function, which takes a non-FSM value and
+creates a FSM that returns it.
 
 ```clj
-(let [op (fn [v] (dofsm result
+(let [op (fn [v] (dofsm my-calc
                    [x (result 1)
                     x (result (+ x 2))]
                    x))
@@ -31,7 +33,12 @@ that returns it.
   (failed? op) ; => nil
 ```
 
+`dofsm` takes a name, a sequence of result and FSM config bindings and a result
+expression. It returns a FSM specification that can be run by `operate`.
+
 Other built-in fsms are `delay-for`, `success` and `fail`.
+
+### Higher order FSMs
 
 The library also provides higher order fsm's. The `timeout` form adds a timeout
 to another fsm.
@@ -49,8 +56,14 @@ to another fsm.
 
 The code above will time-out, if passed a delay-length greater than 500ms.
 
-Another higher order fsm is `map*`, that will run a sequence of fsm's in
-parallel and wait for them to all complete.
+Other higher order FSMs are `map*`, that will run a sequence of fsm's in
+parallel and wait for them to all complete, and `reduce*`, that will thread
+results through a sequence of FSMs.
+
+### Inspection
+
+The `report-operation` function can be used to inspect the state of an operation
+that is running.
 
 ## Installation
 
