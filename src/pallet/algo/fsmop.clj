@@ -50,25 +50,28 @@ functions to control the resulting FSM.
    [pallet.computation.fsm-dsl
     :only [event-handler event-machine-config fsm-name initial-state
            initial-state-data on-enter on-exit
-           state valid-transitions configured-states using-fsm-features]]
+           state valid-transitions configured-states using-fsm-features
+           using-stateful-fsm-features]]
    [pallet.computation.fsm-utils :only [swap!!]]
    [pallet.map-merge :only [merge-keys merge-key]]
    [pallet.thread.executor :only [executor]]
    [slingshot.slingshot :only [throw+]]))
 
 ;;; ## thread pools
-(defonce operate-executor (executor {:prefix "operate"
-                                     :thread-group-name "pallet-operate"}))
+(defonce ^{:defonce true}
+  operate-executor (executor {:prefix "operate"
+                              :thread-group-name "pallet-operate"}))
 
 (defn execute
   "Execute a function in the operate-executor thread pool."
   [f]
   (pallet.thread.executor/execute operate-executor f))
 
-(defonce scheduled-executor (executor {:prefix "op-sched"
-                                       :thread-group-name "pallet-operate"
-                                       :scheduled true
-                                       :pool-size 3}))
+(defonce ^{:defonce true}
+  scheduled-executor (executor {:prefix "op-sched"
+                                :thread-group-name "pallet-operate"
+                                :scheduled true
+                                :pool-size 3}))
 
 (defn execute-after
   "Execute a function after a specified delay in the scheduled-executor thread
@@ -119,10 +122,13 @@ functions to control the resulting FSM.
       (valid-transitions :aborted :running)
       (event-handler default-init-event-handler))
     (state :completed
+      (valid-transitions :completed)
       (event-handler do-nothing-event-handler))
     (state :aborted
+      (valid-transitions :aborted)
       (event-handler do-nothing-event-handler))
     (state :failed
+      (valid-transitions :failed)
       (event-handler do-nothing-event-handler))))
 
 (defmethod merge-key ::merge-guarded-chain
@@ -137,8 +143,38 @@ functions to control the resulting FSM.
    merge-keys
    {:on-enter ::merge-guarded-chain
     :on-exit ::merge-guarded-chain
-    :fsm/fsm-features :union}
+    :transitions :union
+    :fsm/fsm-features :concat
+    :fsm/stateful-fsm-features :concat}
    fsm-configs))
+
+;;; ## Environment stack
+(def op-state-stack-key ::op-state)
+(defn push
+  "Push a value onto a stack, using a vector if the stack is nil."
+  [stack v]
+  (conj (or stack []) v))
+
+(defn push-op-state
+  "Push a new `op-state` map onto the ::opt-state key in the FSM's `state` map."
+  [state op-state]
+  (update-in state [:state-data op-state-stack-key] push op-state))
+
+(defn pop-op-state
+  "Pop a `op-state` map off the ::opt-state key in the FSM's `state` map."
+  [state]
+  (update-in state [:state-data op-state-stack-key] pop))
+
+(defn get-op-state
+  "Get the current `op-state` map off the ::opt-state key in the FSM's `state`
+  map."
+  [state]
+  (-> (get-in state [:state-data op-state-stack-key]) peek))
+
+(defn op-state-stack-depth
+  "op-state stack depth"
+  [state]
+  (-> (get-in state [:state-data op-state-stack-key]) count))
 
 ;;; ## Fundamental primitives
 (defn fail
@@ -146,9 +182,9 @@ functions to control the resulting FSM.
   ([reason]
      (letfn [(init [state event event-data]
                (case event
-                 :start (assoc state
-                          :state-kw :failed
-                          :state-data (assoc event-data :fail-reason reason))))]
+                 :start (update-state
+                         state :failed
+                         assoc :fail-reason reason)))]
        (event-machine-config
          (fsm-name "fail")
          (state :init
@@ -175,7 +211,6 @@ functions to control the resulting FSM.
    specified result `value`."
   [value]
   (letfn [(init [state event event-data]
-            (logging/debugf "result - init: %s" event)
             (case event
               :start (assoc state
                        :state-kw :completed
@@ -229,14 +264,15 @@ functions to control the resulting FSM.
                             state :failed
                             assoc :fail-reason {:reason :timed-out})))
                        delay
-                       delay-units)]
+                       delay-units)
+                    op-state (get-op-state state)]
                 (swap!
-                 (op-timeouts-key state-data)
+                 (op-timeouts-key op-state)
                  assoc timeout-name f))))
           (remove-timeout [timeout-name]
             (fn remove-timeout [{:keys [state-data] :as state}]
               ;; timeouts aren't necessarily in the :init state-data
-              (when-let [timeouts (op-timeouts-key state-data)]
+              (when-let [timeouts (op-timeouts-key (get-op-state state))]
                 (let [[to-map _] (swap!!
                                   timeouts
                                   dissoc timeout-name)]
@@ -271,6 +307,8 @@ functions to control the resulting FSM.
                 (state :completed
                   (on-enter op-completed))
                 (state :failed
+                  (on-enter op-failed))
+                (state :aborted
                   (on-enter op-failed)))))
           (wire-fsms [{:keys [em] :as state}]
             (let [{:keys [event]} em
@@ -282,7 +320,6 @@ functions to control the resulting FSM.
                  patch-fsm))))
           (init [state event event-data]
             (logging/debugf "map* init: event %s" event)
-            (logging/debugf "init has em %s" (:em event-data))
             (case event
               :start
               (let [configs (wire-fsms state)
@@ -327,7 +364,13 @@ functions to control the resulting FSM.
                                    (update-in [::pending-fsms] disj em)
                                    (update-in [::failed-states]
                                               conj event-data))]
-                (maybe-finish (assoc state :state-data state-data)))))
+                (maybe-finish (assoc state :state-data state-data)))
+              :abort
+              (do
+                (doseq [machine (::pending-fsms (:state-data state))
+                        :let [event (:event machine)]]
+                  (event :abort event-data))
+                state)))
           (ops-complete [{:keys [state-data] :as state} event event-data]
             (logging/debugf "ops-complete has em %s" (:em state))
             ;; (logging/debugf
@@ -422,9 +465,26 @@ functions to control the resulting FSM.
 ;;     [op-fsm op-promise]))
 
 
-;;; ## dofsm
+
+
+
+
+;;; ## Sequencing: dofsm and seq*
 ;;;
-;;; Provides a scope in which FSM's are executed sequentially.
+;;; Provide a FSM in which FSM's are executed sequentially.
+
+
+;; (defn update-op-state
+;;   "Pop a `op-state` map off the ::opt-state key in the FSM's `state` map."
+;;   [state f & args]
+;;   (update-in state [:state-data op-state-stack-key]
+;;              (fn [op-state]
+;;                (let [op-state-m (peek op-state)
+;;                      op-state (pop op-state)]
+;;                  (conj op-state (apply f op-state-m args))))))
+
+
+;;; ### Sequential Steps
 
 (defn- wire-step-fsm
   "Wire a fsm configuration to the controlling fsm."
@@ -441,57 +501,110 @@ functions to control the resulting FSM.
                                 (event :step-complete state))))
                   (state :failed
                     (on-enter (fn op-step-failed [state]
-                                (event :step-fail state)))))))))
+                                (event :step-fail state))))
+                  (state :aborted
+                    (on-enter (fn op-step-aborted [state]
+                                (event :step-abort state)))))))))
 
-;; this is similar to a monadic bind function
 (defn- run-step
   "Run an operation step based on the operation primitive."
   [{:keys [state-data] :as state} {:keys [result-f] :as step}]
   {:pre [step result-f]}
-  (let [fsm-config (step-fsm (op-env-key state-data) step)
+  (let [op-state (get-op-state state)
+        fsm-config (step-fsm (op-env-key op-state) step)
         fsm-config (wire-step-fsm (:em state) fsm-config)
         _ (logging/tracef "run-step config %s" fsm-config)
         {:keys [event] :as fsm} (event-machine (:fsm fsm-config))
-        state-data (-> (:state-data state)
-                       (update-in [op-todo-steps-key] pop)
-                       (update-in [op-fsm-machines-key] conj fsm)
-                       (assoc-in [op-result-fn-key] result-f))]
+        op-state (-> op-state
+                     (update-in [op-todo-steps-key] pop)
+                     (update-in [op-fsm-machines-key] conj fsm)
+                     (assoc-in [op-result-fn-key] result-f))
+        state (-> state pop-op-state (push-op-state op-state))]
     (execute (fn run-step-f []
-               (event :start state-data)))
-    (assoc state :state-kw :running :state-data state-data)))
+               (event :start (:state-data state))))
+    (assoc state :state-kw :running)))
 
 (defn- next-step
   "Return the next primitive to be executed in the operation."
   [state]
-  (peek (get-in state [:state-data op-todo-steps-key])))
+  (-> state get-op-state op-todo-steps-key peek))
 
-;;; ## Operation controller FSM
-(defn- operate-init
+;;; ### Operation controller FSM
+;;;
+;;; The initial state set by the FSM config is the operation-state.
+(defn- seq-init
   [state event event-data]
+  (logging/debugf "seq-init")
   (case event
-    :start (let [state (assoc state
-                         :state-data (merge event-data (:state-data state)))]
+    :start (let [state (-> (push-op-state
+                            (assoc state :state-data event-data)
+                            (:state-data state))
+                           (dissoc
+                            op-env-key op-steps-key op-todo-steps-key
+                            op-fsm-machines-key op-timeouts-key
+                            op-overall-result-key))]
              (if-let [next-step (next-step state)]
-               (run-step state next-step)
-               (assoc state :state-kw :completed)))))
+               (try
+                 (run-step state next-step)
+                 (catch Exception e
+                   (update-state
+                    state :failed
+                    assoc :fail-reason {:exception e})))
+               (assoc state :state-kw :completed)))
+    :abort (-> state (assoc :state-kw :aborted) pop-op-state)))
 
-(defn- operate-running
+(defn- seq-running
   [state event event-data]
+  (logging/debugf "seq-running")
   (case event
     :step-complete
     (let [result (get-in event-data [:state-data :result])
-          result-fn (get-in event-data [:state-data op-result-fn-key])]
-      (update-state
-       state :step-completed
-       (partial merge-keys {})
-       (update-in event-data [op-env-key] result-fn result)))
+          history (get-in event-data [:history])
+          op-state (get-op-state event-data)
+          result-fn (get op-state op-result-fn-key)]
+      (try
+        (->
+         state
+         (update-in [:history] conj history)
+         (update-state
+          :step-completed
+          (partial merge-keys {})
+          (-> event-data
+              pop-op-state
+              (push-op-state (update-in op-state [op-env-key] result-fn result))
+              :state-data)))
+        (catch Exception e
+          (update-state
+           state :failed
+           assoc :fail-reason {:exception e}))))
 
     :step-fail
-    (update-state
-     state :step-failed
-     (partial merge-keys {}) (:state-data event-data))))
+    (let [history (get-in event-data [:history])]
+      (->
+       state
+       (update-in [:history] conj history)
+       (update-state
+        :step-failed
+        (partial merge-keys {})
+        (:state-data event-data))))
 
-(defn- operate-step-completed
+    :step-abort
+    (let [history (get-in event-data [:history])]
+      (->
+       state
+       (update-in [:history] conj history)
+       (update-state
+        :aborted
+        (partial merge-keys {})
+        (:state-data event-data))))
+
+    :abort (if-let [machine (peek (op-fsm-machines-key (get-op-state state)))]
+             (do
+               ((:event machine) :abort nil)
+               state)
+             (-> state (assoc :state-kw :aborted) pop-op-state))))
+
+(defn- seq-step-completed
   [state event event-data]
   (case event
     :run-next-step (let [next-step (next-step state)]
@@ -501,50 +614,60 @@ functions to control the resulting FSM.
                          (update-state
                           state :failed
                           assoc :fail-reason {:exception e}))))
-    :complete (assoc state :state-kw :completed)))
+    :complete (let [op-state (-> state get-op-state)]
+                (->
+                 (pop-op-state state)
+                 (update-state
+                  :completed
+                  assoc :result
+                  ((get op-state op-overall-result-key)
+                   (get op-state op-env-key)))))
+    :abort (-> state (assoc :state-kw :aborted) pop-op-state)))
 
-(defn- operate-on-step-completed
+(defn- seq-on-step-completed
   [state]
   (if-let [next-step (next-step state)]
     ((-> state :em :event) :run-next-step nil)
     ((-> state :em :event) :complete nil)))
 
-(defn- operate-step-failed
+(defn- seq-step-failed
   [state event event-data]
-  (logging/debugf "operate-step-failed event %s" event)
+  (logging/debugf "seq-step-failed event %s" event)
   (case event
-    :fail (assoc state :state-kw :failed)))
+    :fail (-> state (assoc :state-kw :failed) pop-op-state)
+    :abort (-> state (assoc :state-kw :aborted) pop-op-state)))
 
-(defn- operate-on-step-failed
+(defn- seq-on-step-failed
   [state]
-  ((-> state :em :event) :fail nil))
+  ((-> state :em :event) :fail state))
 
-;;; ### sequential FSM
-(defn seq-fsm [op-name {:keys [steps result-f]}]
+;;; ### Sequential FSM
+(defn seq-fsm [op-name {:keys [steps result-f]} initial-env]
   (event-machine-config
-    (fsm-name op-name)
+    (fsm-name (and op-name (keyword (name op-name))))
+    (using-stateful-fsm-features :history)
     (initial-state :init)
     (initial-state-data
-     {op-env-key {}
+     {op-env-key initial-env
       op-steps-key steps
       op-todo-steps-key (vec (reverse steps))
       op-fsm-machines-key []
       op-timeouts-key (atom {})
       op-overall-result-key result-f})
     (state :init
-      (valid-transitions :running :completed)
-      (event-handler operate-init))
+      (valid-transitions :running :completed :aborted)
+      (event-handler seq-init))
     (state :running
-      (valid-transitions :step-completed :step-failed)
-      (event-handler operate-running))
+      (valid-transitions :step-completed :step-failed :aborted :running :failed)
+      (event-handler seq-running))
     (state :step-completed
       (valid-transitions :completed :running :failed :aborted)
-      (on-enter operate-on-step-completed)
-      (event-handler operate-step-completed))
+      (on-enter seq-on-step-completed)
+      (event-handler seq-step-completed))
     (state :step-failed
       (valid-transitions :failed :aborted)
-      (on-enter operate-on-step-failed)
-      (event-handler operate-step-failed))))
+      (on-enter seq-on-step-failed)
+      (event-handler seq-step-failed))))
 
 ;;; ### FSM step conversion
 (defn ^{:internal true} symbols
@@ -564,7 +687,7 @@ functions to control the resulting FSM.
 the form in the given environment."
   [form syms]
   (letfn [(sym-binding [sym] (list sym `(get ~'env '~sym)))]
-    `(fn eval-in-env-fn [~'env]
+    `(fn ~(gensym "eval-in-env-fn") [~'env]
        (let [~@(mapcat sym-binding syms)]
          ~form))))
 
@@ -572,25 +695,37 @@ the form in the given environment."
   []
   (zipmap (map #(list 'quote %) (keys &env)) (keys &env)))
 
+(defn ^{:internal true} kill-except
+  [&env & locals]
+  (->>
+   (remove (set locals) (keys &env))
+   (mapcat #(vector % ::killed))))
+
 (defn ^{:internal true} set-in-env-fn
   "Give an expression that is a valid lhs in a binding, return a function of an
   `env` argument and a value that assigns the results of destructuring into
   `env`."
-  [expr]
-  (let [env (gensym "env") result (gensym "result")]
-    `(fn [~env ~result]
-       (let [~expr ~result
-             locals# (locals-map)]
-         (merge
-          ~env
-          (apply
-           dissoc locals# '~env '~result
-           (->> (keys locals#)
-                (remove #(not (re-matches #".*__[0-9]+" (name %)))))))))))
+  [expr &env]
+  (let [env (gensym "env")
+        result (gensym "result")
+        captured (gensym "captured")]
+    `(fn set-in-env-fn [~env ~result]
+       (let [~@(kill-except &env env result)
+             ~expr ~result
+             locals# (locals-map)
+             env# (into
+                   {}
+                   (->>
+                    (apply
+                     dissoc locals# '~env '~result
+                     (->> (keys locals#)
+                          (remove #(not (re-matches #".*__[0-9]+" (name %))))))
+                    (remove #(= ::killed (val%)))))]
+         (merge ~env env#)))))
 
 (defn seq-steps
   "Takes FSM comprehension forms and translates them"
-  [steps result]
+  [steps result &env]
   (letfn [(quote-if-symbol [s] (if (symbol? s) (list 'quote s) s))]
     (let [steps (->> steps
                      (partition 2)
@@ -598,7 +733,7 @@ the form in the given environment."
                       (fn [prev [res op]]
                         (let [visible (union (:syms prev) (set (symbols res)))]
                           (hash-map
-                           :result-f (set-in-env-fn res)
+                           :result-f (set-in-env-fn res &env)
                            :op-sym (list 'quote op)
                            :syms visible
                            :f (eval-in-env-fn op visible))))
@@ -616,7 +751,36 @@ the form in the given environment."
   "A comprehension that results in a compound FSM specification."
   {:indent 1}
   [op-name steps result]
-  `(seq-fsm ~(name op-name) ~(seq-steps steps result)))
+  `(seq-fsm ~(name op-name) ~(seq-steps steps result &env) {}))
+
+(defn reduce*
+  "A reduce function where the passed reducing function `f` should return a FSM
+  configuration, whose result when executed, will be passed to the next call of
+  the reducing function."
+  [f init-value s]
+  (let [result-sym (gensym "result")
+        result-f (fn reduce*-result-f [env]
+                   (logging/debugf
+                    "getting %s -> %s" result-sym (get env result-sym))
+                   (get env result-sym))
+        set-f (fn reduce*-set-f [env v]
+                (logging/debugf "setting %s to %s" result-sym v)
+                (assoc env result-sym v))]
+    (seq-fsm
+     "reduce*"
+     {:result-f result-f
+      :steps (map
+              (fn reduce*-step-map [arg]
+                (hash-map
+                 :result-f set-f
+                 :op-sym 'reduce*
+                 :syms #{result-sym}
+                 :f (fn reduce*-step [env]
+                      (logging/debugf "reduce*-step %s" arg)
+                      (f (get env result-sym) arg))))
+              s)}
+     {result-sym init-value})))
+
 
 ;;; ## User visible execution interface
 (defprotocol Control
@@ -637,16 +801,19 @@ the form in the given environment."
   (failed? [_] (= :failed (:state-kw ((:state fsm)))))
   (wait-for [_] @completed-promise)
   clojure.lang.IDeref
-  (deref [_] @completed-promise))
+  (deref [op] @completed-promise))
 
+;;; ## Operate
 (defn- operate-on-completed
+  "on-enter function for completed state."
   [{:keys [state-kw] :as state}]
-  (deliver
-   (get-in state [:state-data op-promise-key])
-   ((get-in state [:state-data op-overall-result-key])
-    (get-in state [:state-data op-env-key]))))
+  (let [op-state (get-op-state state)]
+    (deliver
+     (get-in state [:state-data op-promise-key])
+     (get-in state [:state-data :result]))))
 
 (defn- operate-on-failed
+  "on-enter function for failed and aborted states."
   [{:keys [state-kw] :as state}]
   (deliver
    (get-in state [:state-data op-promise-key])
@@ -677,18 +844,62 @@ the form in the given environment."
     (event :start {op-promise-key completed-promise})
     (Operation. fsm completed-promise)))
 
+(defn sanitise-history
+  [{:keys [env steps history history-results] :as options} h]
+  (if (map? h)
+    (->
+      h
+      (update-in
+       [:state-data]
+       dissoc op-state-stack-key op-env-key op-steps-key
+       op-todo-steps-key op-fsm-machines-key op-timeouts-key
+       op-overall-result-key op-promise-key
+       (when-not history-results :result))
+      (dissoc op-promise-key))
+    (when (seq h)
+      (filter identity (map (partial sanitise-history options) h)))))
+
+(defn- report-operation-state
+  [state op-state indent
+   {:keys [env steps history history-results] :as options}]
+  (let [steps-seq (vec (map :op-sym (op-steps-key op-state)))]
+    (when env
+      (println indent "env:")
+      (println)
+      (pprint (op-env-key op-state)) ;; can't set initial indent :(
+      (println))
+    (when-let [history (and history (seq (:history state)))]
+      (println)
+      (println indent "history:")
+      (pprint (->> history
+                   (map (partial sanitise-history options))
+                   (filter identity)))
+      (println))
+    (doseq [[step machine] (map vector steps-seq (op-fsm-machines-key op-state))
+            :let [m-state ((:state machine))
+                  m-op-state (get-op-state m-state)]]
+      (println indent step (:state-kw m-state)
+               (or
+                (and (= :failed (:state-kw m-state))
+                     (-> m-state :state-data :fail-reason))
+                ""))
+
+      (when (not= (op-state-stack-depth state) (op-state-stack-depth m-state))
+        (report-operation-state
+         m-state m-op-state (str indent "  ") options)))))
+
 (defn report-operation
   "Print a report on the status of an operation."
-  [operation]
+  [operation & {:keys [env steps history] :as options}]
   (println "------------------------------")
-  (let [status (status operation)
-        state-data (:state-data status)
-        steps (vec (map :op-sym (op-steps-key state-data)))]
-    (println "current state: " (:state-kw status))
-    (println "steps:" steps)
-    (doseq [[step machine] (map vector steps (op-fsm-machines-key state-data))
-            :let [state ((:state machine))]]
-      (println step (:state-kw state)))
-    (println "env:")
-    (pprint (op-env-key state-data)))
+  (let [state (status operation)
+        op-state (get-op-state state)
+        steps-seq (vec (map :op-sym (op-steps-key op-state)))]
+    (println "status:" (:state-kw state))
+    (when-let [fail-reason (and (= :failed (:state-kw state))
+                                (-> state :state-data :fail-reason))]
+      (println "  " fail-reason))
+    (when steps
+      (println "steps:" steps-seq))
+    (report-operation-state state op-state "" options))
   (println "------------------------------"))

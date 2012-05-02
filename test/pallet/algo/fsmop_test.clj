@@ -188,3 +188,61 @@
           (is (= [1 1 1] @op))
           (is (complete? op))
           (is (not (failed? op))))))))
+
+(deftest reduce*-test
+  (testing "reduce* with result tasks"
+    (let [operation (fn [s]
+                      (dofsm reduce*-test
+                        [x (reduce* (fn [res v] (result (+ res v))) 0 s)]
+                        x))]
+      (testing "one task"
+        (let [op (operate (operation [1 2 3]))]
+          (is (= 6 @op))
+          (is (complete? op))
+          (is (not (failed? op))))))))
+
+(deftest nested-dofsm-test
+  (testing "nested dofsm"
+    (let [operation (fn [v] (dofsm result-outer
+                              [x (dofsm result-inner
+                                   [y (result v)]
+                                   y)]
+                              x))
+          op (operate (operation :ok))]
+      (is (= :ok @op))
+      (is (complete? op))
+      (is (not (failed? op)))))
+  (testing "nested failed dofsm"
+    (let [operation (fn [v] (dofsm result-outer
+                              [x (dofsm fail-inner
+                                   [y (fail :reason)]
+                                   y)]
+                              x))
+          op (operate (operation :ok))]
+      (is (= :reason @op))
+      (is (not (complete? op)))
+      (is (failed? op))))
+  (testing "double nested failed dofsm"
+    (let [operation (fn [v] (dofsm result-outer
+                              [w (dofsm result-inter
+                                   [x (dofsm fail-inner
+                                        [y (fail :reason)]
+                                        y)]
+                                   x)]
+                              w))
+          op (operate (operation :ok))]
+      (is (= :reason @op))
+      (is (not (complete? op)))
+      (is (failed? op))))
+  (testing "nested exception"
+    (let [e (Exception. "e")
+          operation (fn [v] (dofsm result-outer
+                              [x (dofsm fail-inner
+                                   [y (fail {:exception e})]
+                                   y)]
+                              x))
+          op (operate (operation :ok))]
+      (is (= {:exception e} @op))
+      (is (= {:exception e} (wait-for op)))
+      (is (not (complete? op)))
+      (is (failed? op)))))
