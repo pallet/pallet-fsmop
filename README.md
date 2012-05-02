@@ -60,10 +60,20 @@ Other higher order FSMs are `map*`, that will run a sequence of fsm's in
 parallel and wait for them to all complete, and `reduce*`, that will thread
 results through a sequence of FSMs.
 
+### Running a FSM
+
+A FSM configuration can be run by the `operate` function. The function returns a
+FSM `Operation` object that can be used to obtain the state of the FSM operation
+via the `Control` protocol.
+
+You can wait for the FSM to complete by deref'ing the FSM operation.
+
+
 ### Inspection
 
 The `report-operation` function can be used to inspect the state of an operation
 that is running.
+
 
 ## Installation
 
