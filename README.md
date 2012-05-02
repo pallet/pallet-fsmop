@@ -66,8 +66,7 @@ A FSM configuration can be run by the `operate` function. The function returns a
 FSM `Operation` object that can be used to obtain the state of the FSM operation
 via the `Control` protocol.
 
-You can wait for the FSM to complete by deref'ing the FSM operation.
-
+You can wait for the FSM to complete by `deref`'ing the FSM operation.
 
 ### Inspection
 

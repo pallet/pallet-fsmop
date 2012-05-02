@@ -46,13 +46,13 @@ functions to control the resulting FSM.
   (:use
    [clojure.pprint :only [pprint]]
    [clojure.set :only [union]]
-   [pallet.computation.event-machine :only [event-machine]]
-   [pallet.computation.fsm-dsl
+   [pallet.algo.fsm.event-machine :only [event-machine]]
+   [pallet.algo.fsm.fsm-dsl
     :only [event-handler event-machine-config fsm-name initial-state
            initial-state-data on-enter on-exit
            state valid-transitions configured-states using-fsm-features
            using-stateful-fsm-features]]
-   [pallet.computation.fsm-utils :only [swap!!]]
+   [pallet.algo.fsm.fsm-utils :only [swap!!]]
    [pallet.map-merge :only [merge-keys merge-key]]
    [pallet.thread.executor :only [executor]]
    [slingshot.slingshot :only [throw+]]))
