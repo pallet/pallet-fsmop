@@ -397,9 +397,9 @@ functions to control the resulting FSM.
                         assoc
                         :fail-reason
                         {:reason :failed-ops
-                         :failed-reasons (map
-                                          :fail-reason
-                                          (::failed-states op-state))}
+                         :fail-reasons (map
+                                        :fail-reason
+                                        (::failed-states op-state))}
                         :result
                         (map :result
                              (::completed-states (get-op-state state))))))
@@ -666,7 +666,7 @@ functions to control the resulting FSM.
       op-timeouts-key (atom {})
       op-overall-result-key result-f})
     (state :init
-      (valid-transitions :running :completed :aborted)
+      (valid-transitions :running :completed :aborted :failed)
       (event-handler seq-init))
     (state :running
       (valid-transitions :step-completed :step-failed :aborted :running :failed)
