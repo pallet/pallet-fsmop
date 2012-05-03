@@ -204,7 +204,38 @@
         (let [op (operate (operation 3))]
           (is (= [1 1 1] @op))
           (is (complete? op))
-          (is (not (failed? op))))))))
+          (is (not (failed? op)))))))
+  (testing "tasks with fail"
+    (let [operation (dofsm map*-success
+                      [x (map* [(result 1) (fail :because)])]
+                      x)
+          op (operate operation)]
+      (is (= {:reason :failed-ops :failed-reasons [:because]}
+             @op))
+      (is (failed? op))
+      (is (not (complete? op)))))
+  (testing "nested tasks"
+    (let [operation (fn [n]
+                      (dofsm map*-success
+                        [x (map* (repeat n (map* (repeat 2 (result 1)))))]
+                        x))
+          op (operate (operation 3))]
+      (is (= [[1 1] [1 1] [1 1]] @op))
+      (is (complete? op))
+      (is (not (failed? op)))))
+  (testing "nested tasks with fail"
+    (let [operation (fn [n]
+                      (dofsm map*-success
+                        [x (map* (repeat n (map* [(result 1) (fail :nok)])))]
+                        x))
+          op (operate (operation 3))]
+      (is (= {:reason :failed-ops
+              :failed-reasons [{:reason :failed-ops, :failed-reasons [:nok]}
+                               {:reason :failed-ops, :failed-reasons [:nok]}
+                               {:reason :failed-ops, :failed-reasons [:nok]}]}
+              @op))
+      (is (failed? op))
+      (is (not (complete? op))))))
 
 (deftest reduce*-test
   (testing "reduce* with result tasks"

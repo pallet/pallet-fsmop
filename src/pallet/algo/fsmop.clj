@@ -332,84 +332,86 @@ functions to control the resulting FSM.
               (let [configs (wire-fsms state)
                     fsms (map event-machine configs)]
                 (if (seq fsms)
-                  (update-state
-                   state :running
-                   merge event-data {::fsms fsms ::pending-fsms (set fsms)})
+                  (->
+                   state
+                   (update-state :running merge event-data)
+                   (push-op-state {::fsms fsms ::pending-fsms (set fsms)}))
                   (assoc state :state-kw :completed :state-data event-data)))))
           (on-running [{:keys [state-data] :as state}]
             (logging/debug "map* on running")
-            (let [fsms (::fsms state-data)]
+            (let [fsms (::fsms (get-op-state state))]
               (logging/debugf "map* on-running starting %s fsms" (count fsms))
               (doseq [{:keys [event] :as fsm} fsms]
                 (execute #(event :start state)))))
           (maybe-finish [{:keys [state-data] :as state}]
             (logging/debugf
              "maybe-finish pending count %s"
-             (count (::pending-fsms state-data)))
-            (if (seq (::pending-fsms state-data))
+             (count (::pending-fsms (get-op-state state))))
+            (if (seq (::pending-fsms (get-op-state state)))
               state
               (assoc state :state-kw :ops-complete)))
           (running [{:keys [state-data] :as state} event event-data]
             (logging/debugf
              "running pending count %s"
-             (count (::pending-fsms state-data)))
-            (logging/debugf "running has em %s" (:em state))
+             (count (::pending-fsms (get-op-state state))))
             (case event
               :op-complete
               (let [{:keys [em]} event-data
-                    state-data (-> state-data
-                                   (update-in [::pending-fsms] disj em)
-                                   (update-in [::completed-states]
-                                              conj event-data))]
+                    op-state (->
+                              (get-op-state state)
+                              (update-in [::pending-fsms] disj em)
+                              (update-in [::completed-states]
+                                         conj (:state-data event-data)))]
                 (logging/debugf
                  "op-complete result: %s"
                  (-> event-data :state-data :result))
-                (maybe-finish (assoc state :state-data state-data)))
+                (maybe-finish (-> state pop-op-state (push-op-state op-state))))
               :op-fail
               (let [{:keys [em]} event-data
-                    state-data (-> state-data
-                                   (update-in [::pending-fsms] disj em)
-                                   (update-in [::failed-states]
-                                              conj event-data))]
-                (maybe-finish (assoc state :state-data state-data)))
+                    op-state (->
+                              (get-op-state state)
+                              (update-in [::pending-fsms] disj em)
+                              (update-in [::failed-states]
+                                         conj (:state-data event-data)))]
+                (maybe-finish (-> state pop-op-state (push-op-state op-state))))
               :abort
               (do
-                (doseq [machine (::pending-fsms (:state-data state))
+                (doseq [machine (::pending-fsms (get-op-state state))
                         :let [event (:event machine)]]
                   (event :abort event-data))
                 state)))
           (ops-complete [{:keys [state-data] :as state} event event-data]
-            (logging/debugf "ops-complete has em %s" (:em state))
-            ;; (logging/debugf
-            ;;  "ops-complete - result: %s"
-            ;;  (-> state :state-data op-result-sym-key))
             (case event
-              :abort (update-state state :aborted assoc :fail-reason event-data)
-              :fail (update-state
-                     state :failed
-                     assoc :fail-reason
-                     {:reason :failed-ops
-                      :failed-reasons (map (comp :fail-reason :state-data)
-                                           (::failed-states state-data))
-                      :failed-states (::failed-states state-data)
-                      :completed-states (::completed-states state-data)})
-              :complete (do
-                          ;; (logging/debugf
-                          ;;  "complete result: %s %s"
-                          ;;  (op-result-sym-key state-data)
-                          ;;  (vec (map (comp :result :state-data)
-                          ;;            (::completed-states state-data))))
-                          (update-state
-                           state :completed
-                           assoc :result
-                           (map (comp :result :state-data)
-                                (::completed-states state-data))))))
+              :abort (->
+                      state
+                      pop-op-state
+                      (update-state :aborted assoc :fail-reason event-data))
+              :fail (let [op-state (get-op-state state)]
+                      (->
+                       state
+                       pop-op-state
+                       (update-state
+                        :failed
+                        assoc
+                        :fail-reason
+                        {:reason :failed-ops
+                         :failed-reasons (map
+                                          :fail-reason
+                                          (::failed-states op-state))}
+                        :result
+                        (map :result
+                             (::completed-states (get-op-state state))))))
+              :complete (->
+                         state
+                         pop-op-state
+                         (update-state
+                          :completed
+                          assoc :result
+                          (map :result
+                               (::completed-states (get-op-state state)))))))
           (on-ops-complete [{:keys [em state-data] :as state}]
-            ;; (logging/debugf
-            ;;  "on-ops-complete - result: %s"
-            ;;  (-> state :state-data op-result-sym-key))
             (let [{:keys [event]} em]
-              (if (seq (::failed-states state-data))
+              (if (seq (::failed-states (get-op-state state)))
                 (event :fail nil)
                 (event :complete nil))))]
     (event-machine-config
