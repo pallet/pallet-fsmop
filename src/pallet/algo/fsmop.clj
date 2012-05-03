@@ -336,7 +336,9 @@ functions to control the resulting FSM.
                    state
                    (update-state :running merge event-data)
                    (push-op-state {::fsms fsms ::pending-fsms (set fsms)}))
-                  (assoc state :state-kw :completed :state-data event-data)))))
+                  (assoc state
+                    :state-kw :completed
+                    :state-data (assoc event-data :result nil))))))
           (on-running [{:keys [state-data] :as state}]
             (logging/debug "map* on running")
             (let [fsms (::fsms (get-op-state state))]

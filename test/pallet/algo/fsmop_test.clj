@@ -204,6 +204,21 @@
         (let [op (operate (operation 3))]
           (is (= [1 1 1] @op))
           (is (complete? op))
+          (is (not (failed? op)))))
+      (testing "zero tasks"
+        (let [op (operate (operation 0))]
+          (is (nil? @op))
+          (is (complete? op))
+          (is (not (failed? op)))))))
+  (testing "zero args after non-nil result"
+    (let [operation (dofsm map*-success
+                      [x (result 1)
+                       x (map* nil)]
+                      x)]
+      (testing "returns nil"
+        (let [op (operate operation)]
+          (is (nil? @op))
+          (is (complete? op))
           (is (not (failed? op)))))))
   (testing "tasks with fail"
     (let [operation (dofsm map*-success
