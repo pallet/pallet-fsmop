@@ -13,9 +13,26 @@
                       [_ (succeed)]
                       _)
           op (operate operation)]
-      @op
+      (is (nil? @op))
       (is (complete? op))
       (is (not (failed? op)))))
+  (testing "succeed with flag"
+    (let [operation (dofsm succeed-test
+                      [_ (succeed true)
+                       _ (succeed true :reason)]
+                      _)
+          op (operate operation)]
+      (is (nil? @op))
+      (is (complete? op))
+      (is (not (failed? op)))))
+  (testing "succeed fail with reason"
+    (let [operation (dofsm succeed-test
+                      [_ (succeed false :reason)]
+                      _)
+          op (operate operation)]
+      (is (= :reason @op))
+      (is (not (complete? op)))
+      (is (failed? op))))
   (testing "succeed, succeed"
     (let [operation (dofsm succeed-test
                       [_ (succeed)

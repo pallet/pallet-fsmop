@@ -192,19 +192,26 @@ functions to control the resulting FSM.
            (event-handler init)))))
   ([] (fail nil)))
 
-;; Not sure if we need this - or just let result take no arguments
 (defn succeed
-  "An operation primitive that does nothing but succeed immediately."
-  []
-  (letfn [(init [state event event-data]
-            (case event
-              :start (assoc state :state-kw :completed
-                            :state-data event-data)))]
-    (event-machine-config
-      (fsm-name "succeed")
-      (state :init
-        (valid-transitions :completed)
-        (event-handler init)))))
+  "An operation primitive that does nothing but succeed or fail immediately
+  based on the passed flag. The default is to succeed."
+  ([flag fail-reason]
+     (letfn [(init [state event event-data]
+               (case event
+                 :start (if flag
+                          (assoc state
+                            :state-kw :completed :state-data event-data)
+                          (assoc state
+                            :state-kw :failed
+                            :state-data (assoc event-data
+                                          :fail-reason fail-reason)))))]
+       (event-machine-config
+         (fsm-name "succeed")
+         (state :init
+           (valid-transitions :completed :failed)
+           (event-handler init)))))
+  ([flag] (succeed flag nil))
+  ([] (succeed true nil)))
 
 (defn result
   "An operation primitive that does nothing but succeed immediately with the
