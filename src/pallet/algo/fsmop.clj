@@ -747,7 +747,7 @@ the form in the given environment."
                            :result-f (set-in-env-fn res &env)
                            :op-sym (list 'quote op)
                            :syms visible
-                           :f (eval-in-env-fn op visible))))
+                           :f (eval-in-env-fn op (:syms prev)))))
                       {})
                      (drop 1)
                      vec)
