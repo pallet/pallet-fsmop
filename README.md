@@ -79,7 +79,7 @@ that is running.
 To use pallet-fsmop, add the following to your `:dependencies` in `project.clj`:
 
 ```clj
-[pallet-fsmop "0.1.0-SNAPSHOT"]
+[pallet-fsmop "0.1.0"]
 ```
 
 ## License
