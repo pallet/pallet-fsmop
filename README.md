@@ -36,7 +36,7 @@ creates a FSM that returns it.
 `dofsm` takes a name, a sequence of result and FSM config bindings and a result
 expression. It returns a FSM specification that can be run by `operate`.
 
-Other built-in fsms are `delay-for`, `success` and `fail`.
+Other built-in fsms are `delay-for`, `success`, `result` and `fail`.
 
 ### Higher order FSMs
 
@@ -76,9 +76,11 @@ that is running.
 
 ## Installation
 
-To use pallet-fsmop, add the following to your :dependencies:
+To use pallet-fsmop, add the following to your `:dependencies` in `project.clj`:
 
-[pallet-fsm-op "0.1.0-SNAPSHOT"]
+```clj
+[pallet-fsmop "0.1.0"]
+```
 
 ## License
 
