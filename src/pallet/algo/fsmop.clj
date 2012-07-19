@@ -547,7 +547,8 @@ functions to control the resulting FSM.
   [state event event-data]
   (logging/debugf "seq-init")
   (case event
-    :start (let [state (-> (push-op-state
+    :start (let [init-state state
+                 state (-> (push-op-state
                             (assoc state :state-data event-data)
                             (:state-data state))
                            (dissoc
@@ -561,7 +562,14 @@ functions to control the resulting FSM.
                    (update-state
                     state :failed
                     assoc :fail-reason {:exception e})))
-               (assoc state :state-kw :completed)))
+               (->
+                state
+                pop-op-state
+                (update-state
+                 :completed
+                 assoc :result
+                 ((get-in init-state [:state-data op-overall-result-key])
+                  (get-in init-state [:state-data op-env-key]))))))
     :abort (-> state (assoc :state-kw :aborted) pop-op-state)))
 
 (defn- seq-running
