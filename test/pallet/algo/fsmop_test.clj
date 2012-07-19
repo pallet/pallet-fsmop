@@ -7,6 +7,14 @@
   (:import
    pallet.algo.fsmop.Operation))
 
+(deftest dofsm-test
+  (testing "empty"
+    (let [operation (dofsm succeed-test [] 1)
+          op (operate operation)]
+      (is (= 1 @op))
+      (is (complete? op))
+      (is (not (failed? op))))))
+
 (deftest succeed-test
   (testing "succeed"
     (let [operation (dofsm succeed-test
@@ -261,6 +269,11 @@
       (testing "one task"
         (let [op (operate (operation [1 2 3]))]
           (is (= 6 @op))
+          (is (complete? op))
+          (is (not (failed? op)))))
+      (testing "no tasks"
+        (let [op (operate (operation []))]
+          (is (= 0 @op))
           (is (complete? op))
           (is (not (failed? op))))))))
 

@@ -10,6 +10,9 @@ The fsm's that can be composed should have an :init initial state, and should
 respond to the :start event.  They should have :completed, :failed, :aborted,
 and maybe :timed-out as terminal states.
 
+Wondering why you might want to use this? See the
+[rationale](https://github.com/pallet/pallet-fsmop/wiki/Rationale).
+
 ## Usage
 
 FSM's are built as functions, and then executed using the `operate` function,
@@ -79,7 +82,7 @@ that is running.
 To use pallet-fsmop, add the following to your `:dependencies` in `project.clj`:
 
 ```clj
-[pallet-fsmop "0.1.0"]
+[pallet-fsmop "0.1.1"]
 ```
 
 ## License
