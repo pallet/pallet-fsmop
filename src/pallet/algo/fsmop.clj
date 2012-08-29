@@ -727,8 +727,9 @@ the form in the given environment."
   [expr &env]
   (let [env (gensym "env")
         result (gensym "result")
-        captured (gensym "captured")]
-    `(fn set-in-env-fn [~env ~result]
+        captured (gensym "captured")
+        set-in-env-name (gensym "set-in-env")]
+    `(fn ~set-in-env-name [~env ~result]
        (let [~@(kill-except &env env result)
              ~expr ~result
              locals# (locals-map)
