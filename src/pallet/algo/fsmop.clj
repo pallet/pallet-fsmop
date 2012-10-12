@@ -58,6 +58,14 @@ functions to control the resulting FSM.
    [slingshot.slingshot :only [throw+]]))
 
 ;;; ## thread pools
+(defn report-exceptions
+  [f]
+  (fn report-exceptions []
+    (try
+      (f)
+      (catch Exception e
+        (logging/errorf e "Unexpected exception")))))
+
 (defonce ^{:defonce true}
   operate-executor (executor {:prefix "operate"
                               :thread-group-name "pallet-operate"}))
@@ -65,7 +73,7 @@ functions to control the resulting FSM.
 (defn execute
   "Execute a function in the operate-executor thread pool."
   [f]
-  (pallet.thread.executor/execute operate-executor f))
+  (pallet.thread.executor/execute operate-executor (report-exceptions f)))
 
 (defonce ^{:defonce true}
   scheduled-executor (executor {:prefix "op-sched"
@@ -77,7 +85,8 @@ functions to control the resulting FSM.
   "Execute a function after a specified delay in the scheduled-executor thread
   pool. Returns a ScheduledFuture."
   [f delay delay-units]
-  (pallet.thread.executor/execute-after scheduled-executor f delay delay-units))
+  (pallet.thread.executor/execute-after
+   scheduled-executor (report-exceptions f) delay delay-units))
 
 ;;; ## FSM helpers
 
@@ -545,7 +554,7 @@ functions to control the resulting FSM.
 ;;; The initial state set by the FSM config is the operation-state.
 (defn- seq-init
   [state event event-data]
-  (logging/debugf "seq-init")
+  (logging/debugf "seq-init on %s event" event)
   (case event
     :start (let [init-state state
                  state (-> (push-op-state
@@ -570,7 +579,15 @@ functions to control the resulting FSM.
                  assoc :result
                  ((get-in init-state [:state-data op-overall-result-key])
                   (get-in init-state [:state-data op-env-key]))))))
-    :abort (-> state (assoc :state-kw :aborted) pop-op-state)))
+    :abort (-> state (assoc :state-kw :aborted) pop-op-state)
+    (do
+      (logging/errorf "seq-init invalid event %s" event)
+      (throw+
+       {:state state
+        :event event
+        :event-data event-data
+        :reason :invalid-event}
+       "Invalid event in seq-init"))))
 
 (defn- seq-running
   [state event event-data]
@@ -663,7 +680,7 @@ functions to control the resulting FSM.
 ;;; ### Sequential FSM
 (defn seq-fsm [op-name {:keys [steps result-f]} initial-env]
   (event-machine-config
-    (fsm-name (and op-name (keyword (name op-name))))
+    (fsm-name (and op-name (keyword (str "dofsm-" (name op-name)))))
     (using-stateful-fsm-features :history)
     (initial-state :init)
     (initial-state-data
