@@ -5,7 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.2.1"]
                  [org.clojure/tools.logging "0.2.3"]
-                 [pallet-fsm "0.1.0"]
+                 [pallet-fsm "0.1.1"]
                  [pallet-map-merge "0.1.0"]
                  [pallet-thread "0.1.0"]]
   :profiles {:dev {:dependencies [[codox-md "0.1.0"]
