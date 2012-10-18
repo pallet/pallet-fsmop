@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.1.4
+
+- Use the new fsm :lock-transition feature
+  Races were being caused by state-change events triggering transitions
+  before the original transition was completed.
+
 ## 0.1.3
 
 - Ensure exceptions thrown in asynch functions are reported
