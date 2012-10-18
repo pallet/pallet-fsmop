@@ -126,6 +126,7 @@ functions to control the resulting FSM.
        :private true}
   default-primitive-fsm
   (event-machine-config
+    (using-fsm-features :lock-transition)
     (initial-state :init)
     (state :init
       (valid-transitions :aborted :running)
@@ -216,6 +217,7 @@ functions to control the resulting FSM.
                                           :fail-reason fail-reason)))))]
        (event-machine-config
          (fsm-name "succeed")
+         (using-fsm-features :lock-transition)
          (state :init
            (valid-transitions :completed :failed)
            (event-handler init)))))
@@ -233,6 +235,7 @@ functions to control the resulting FSM.
                        :state-data (assoc event-data :result value))))]
     (event-machine-config
       (fsm-name "result")
+      (using-fsm-features :lock-transition)
       (state :init
         (valid-transitions :completed)
         (event-handler init)))))
@@ -254,6 +257,7 @@ functions to control the resulting FSM.
             ((:transition em) #(assoc % :state-kw :completed)))]
     (event-machine-config
       (fsm-name "delay-for")
+      (using-fsm-features :lock-transition)
       (state :init
         (valid-transitions :running)
         (event-handler init))
@@ -300,6 +304,7 @@ functions to control the resulting FSM.
           (add-timeout-transitions [state-kw]
             (let [timeout-name (gensym (str "to-" (name state-kw)))]
               (event-machine-config
+               (using-fsm-features :lock-transition)
                 (state state-kw
                   (on-enter (add-timeout timeout-name))
                   (on-exit (remove-timeout timeout-name))))))]
@@ -320,6 +325,7 @@ functions to control the resulting FSM.
                       (logging/debug "map* op-failed")
                       (event :op-fail state))]
               (event-machine-config
+                (using-fsm-features :lock-transition)
                 (state :completed
                   (on-enter op-completed))
                 (state :failed
@@ -518,13 +524,13 @@ functions to control the resulting FSM.
                 (event-machine-config
                   (state :completed
                     (on-enter (fn op-step-completed [state]
-                                (event :step-complete state))))
+                                (execute #(event :step-complete state)))))
                   (state :failed
                     (on-enter (fn op-step-failed [state]
-                                (event :step-fail state))))
+                                (execute #(event :step-fail state)))))
                   (state :aborted
                     (on-enter (fn op-step-aborted [state]
-                                (event :step-abort state)))))))))
+                                (execute #(event :step-abort state))))))))))
 
 (defn- run-step
   "Run an operation step based on the operation primitive."
@@ -682,6 +688,7 @@ functions to control the resulting FSM.
   (event-machine-config
     (fsm-name (and op-name (keyword (str "dofsm-" (name op-name)))))
     (using-stateful-fsm-features :history)
+    (using-fsm-features :lock-transition)
     (initial-state :init)
     (initial-state-data
      {op-env-key initial-env
