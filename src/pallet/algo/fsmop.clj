@@ -844,7 +844,10 @@ the form in the given environment."
   (failed? [_] (= :failed (:state-kw ((:state fsm)))))
   (wait-for [_] @completed-promise)
   clojure.lang.IDeref
-  (deref [op] @completed-promise))
+  (deref [op]
+    (if-let [e (:exception @completed-promise)]
+      (throw e)
+      @completed-promise)))
 
 ;;; ## Operate
 (defn- operate-on-completed
