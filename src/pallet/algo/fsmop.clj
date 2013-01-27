@@ -42,20 +42,18 @@ functions to control the resulting FSM.
 
 "
   (:require
-   [clojure.tools.logging :as logging])
-  (:use
-   [clojure.pprint :only [pprint]]
-   [clojure.set :only [union]]
-   [pallet.algo.fsm.event-machine :only [event-machine]]
+   [clojure.pprint :refer [pprint]]
+   [clojure.set :refer [union]]
+   [clojure.tools.logging :as logging]
+   [pallet.algo.fsm.event-machine :refer [event-machine]]
    [pallet.algo.fsm.fsm-dsl
-    :only [event-handler event-machine-config fsm-name initial-state
-           initial-state-data on-enter on-exit
-           state valid-transitions configured-states using-fsm-features
-           using-stateful-fsm-features]]
-   [pallet.algo.fsm.fsm-utils :only [swap!!]]
-   [pallet.map-merge :only [merge-keys merge-key]]
-   [pallet.thread.executor :only [executor]]
-   [slingshot.slingshot :only [throw+]]))
+    :refer [event-handler event-machine-config fsm-name initial-state
+            initial-state-data on-enter on-exit
+            state valid-transitions configured-states using-fsm-features
+            using-stateful-fsm-features]]
+   [pallet.algo.fsm.fsm-utils :refer [swap!!]]
+   [pallet.map-merge :refer [merge-keys merge-key]]
+   [pallet.thread.executor :refer [executor]]))
 
 ;;; ## thread pools
 (defn report-exceptions
@@ -588,12 +586,13 @@ functions to control the resulting FSM.
     :abort (-> state (assoc :state-kw :aborted) pop-op-state)
     (do
       (logging/errorf "seq-init invalid event %s" event)
-      (throw+
-       {:state state
-        :event event
-        :event-data event-data
-        :reason :invalid-event}
-       "Invalid event in seq-init"))))
+      (throw
+       (ex-info
+        "Invalid event in seq-init"
+        {:state state
+         :event event
+         :event-data event-data
+         :reason :invalid-event})))))
 
 (defn- seq-running
   [state event event-data]
