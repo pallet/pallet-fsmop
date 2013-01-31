@@ -318,7 +318,8 @@
                                    y)]
                               x))
           op (operate (operation :ok))]
-      (is (= {:exception e} @op))
+      (is (= {:exception e} (wait-for op)))
+      (is (thrown? Exception @op))
       (is (= {:exception e} (wait-for op)))
       (is (not (complete? op)))
       (is (failed? op)))))

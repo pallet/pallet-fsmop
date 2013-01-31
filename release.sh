@@ -39,7 +39,7 @@ echo -n "commiting project.clj, release notes and readme.  enter to continue:" \
 && git add project.clj ReleaseNotes.md README.md \
 && git commit -m "Updated project.clj, release notes and readme for $version" \
 && echo -n "Peform release.  enter to continue:" && read x \
-&& lein with-profile default:1.3:1.4 test \
+&& lein with-profile default:clojure-1.5 test \
 && lein do install, deploy clojars \
 && git flow release finish $version \
 && lein with-profile release set-version ${next_version} \
