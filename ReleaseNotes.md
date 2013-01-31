@@ -1,5 +1,15 @@
 # Release Notes
 
+## 0.2.0
+
+- Update to pallet-fsm 0.2.0
+
+- Throw on deref if :exception in operation map
+  Use wait-for to access the operation result without throwing.
+
+- Require clojure 1.4
+  Also drops usage of slingshot.
+
 ## 0.1.4
 
 - Use the new fsm :lock-transition feature
