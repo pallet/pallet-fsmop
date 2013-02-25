@@ -44,6 +44,7 @@ functions to control the resulting FSM.
   (:require
    [clojure.pprint :refer [pprint]]
    [clojure.set :refer [union]]
+   [clojure.string :refer [join]]
    [clojure.tools.logging :as logging]
    [pallet.algo.fsm.event-machine :refer [event-machine]]
    [pallet.algo.fsm.fsm-dsl
@@ -848,6 +849,27 @@ the form in the given environment."
     (if-let [e (:exception @completed-promise)]
       (throw e)
       @completed-promise)))
+
+(defmethod print-method Operation [^Operation op writer]
+  (let [state ((:state (.fsm op)))
+        history (:history state)
+        n (:fsm/name (first history))
+        states (doall (map :state-kw history))]
+    (.write writer "#<")
+    (.write writer (.getSimpleName (class op)))
+    (when n
+      (.write writer " ")
+      (.write writer (name n)))
+    (.write writer ": ")
+    (.write writer (let [x (failed? op)]
+                     (cond
+                      x "failed"
+                      (nil? x) "running"
+                      :else "complete")))
+    (when (seq states)
+      (.write writer " ")
+      (.write writer (join " " states))))
+  (.write writer ">"))
 
 ;;; ## Operate
 (defn- operate-on-completed
