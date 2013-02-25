@@ -1,5 +1,18 @@
 # Release Notes
 
+## 0.2.1
+
+- Add a running? predicate to the Control protocol
+  The predicate returns true if the operation is still running, and has not
+  completed or failed.
+
+- Use three value returns for failed? and complete?
+  Return nil if the operation is still running.
+
+- Add a print-method for Operation to avoid blocking
+  When an operation is printed at the repl, it shouldn't cause the repl
+  block.
+
 ## 0.2.0
 
 - Update to pallet-fsm 0.2.0
