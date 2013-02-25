@@ -837,6 +837,7 @@ otherwise")
   (failed? [_]
     "Predicate to test if operation is failed.  Returns false if the operation
 completed without error, true if the operation failed, or nil otherwise.")
+  (running? [_] "Predicate to test if the operation is running.")
   (wait-for [_] "wait on the result of the completed operation"))
 
 ;; Represents a running operation
@@ -853,6 +854,7 @@ completed without error, true if the operation failed, or nil otherwise.")
                    (if (realized? completed-promise)
                      false
                      nil)))
+  (running? [_] (not (realized? completed-promise)))
   (wait-for [_] @completed-promise)
   clojure.lang.IDeref
   (deref [op]
