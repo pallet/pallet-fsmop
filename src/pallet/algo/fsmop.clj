@@ -44,6 +44,7 @@ functions to control the resulting FSM.
   (:require
    [clojure.pprint :refer [pprint]]
    [clojure.set :refer [union]]
+   [clojure.string :refer [join]]
    [clojure.tools.logging :as logging]
    [pallet.algo.fsm.event-machine :refer [event-machine]]
    [pallet.algo.fsm.fsm-dsl
@@ -830,8 +831,13 @@ the form in the given environment."
   "Operation control protocol."
   (abort [_] "Abort the operation.")
   (status [_] "Return the status of the operation.")
-  (complete? [_] "Predicate to test if operation is complete.")
-  (failed? [_] "Predicate to test if operation is failed.")
+  (complete? [_] "Predicate to test if operation is complete.  Returns false if
+the operation failed with an error, true if the operation succeeded, or nil
+otherwise")
+  (failed? [_]
+    "Predicate to test if operation is failed.  Returns false if the operation
+completed without error, true if the operation failed, or nil otherwise.")
+  (running? [_] "Predicate to test if the operation is running.")
   (wait-for [_] "wait on the result of the completed operation"))
 
 ;; Represents a running operation
@@ -840,14 +846,42 @@ the form in the given environment."
   Control
   (abort [_] ((:event fsm) :abort nil))
   (status [_] ((:state fsm)))
-  (complete? [_] (= :completed (:state-kw ((:state fsm)))))
-  (failed? [_] (= :failed (:state-kw ((:state fsm)))))
+  (complete? [_] (or (= :completed (:state-kw ((:state fsm))))
+                     (if (realized? completed-promise)
+                       false
+                       nil)))
+  (failed? [_] (or (= :failed (:state-kw ((:state fsm))))
+                   (if (realized? completed-promise)
+                     false
+                     nil)))
+  (running? [_] (not (realized? completed-promise)))
   (wait-for [_] @completed-promise)
   clojure.lang.IDeref
   (deref [op]
     (if-let [e (:exception @completed-promise)]
       (throw e)
       @completed-promise)))
+
+(defmethod print-method Operation [^Operation op writer]
+  (let [state ((:state (.fsm op)))
+        history (:history state)
+        n (:fsm/name (first history))
+        states (doall (map :state-kw history))]
+    (.write writer "#<")
+    (.write writer (.getSimpleName (class op)))
+    (when n
+      (.write writer " ")
+      (.write writer (name n)))
+    (.write writer ": ")
+    (.write writer (let [x (failed? op)]
+                     (cond
+                      x "failed"
+                      (nil? x) "running"
+                      :else "complete")))
+    (when (seq states)
+      (.write writer " ")
+      (.write writer (join " " states))))
+  (.write writer ">"))
 
 ;;; ## Operate
 (defn- operate-on-completed
