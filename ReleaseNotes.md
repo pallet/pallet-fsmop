@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.2.2
+
+- Allow timeouts to Operation deref and wait-for
+  Add clojure.lang.IBlockingDeref to Operation, and add an arity to
+  wait-for.
+
 ## 0.2.1
 
 - Add a running? predicate to the Control protocol
