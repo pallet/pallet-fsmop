@@ -69,7 +69,9 @@ A FSM configuration can be run by the `operate` function. The function returns a
 FSM `Operation` object that can be used to obtain the state of the FSM operation
 via the `Control` protocol.
 
-You can wait for the FSM to complete by `deref`'ing the FSM operation.
+You can wait for the FSM to complete by `deref`'ing the FSM operation, which
+will re-throw any exceptions.  You can also use `wait-for` to wait.  In the
+later case, exceptions are reported on the `:exception` key.
 
 ### Inspection
 
@@ -82,7 +84,7 @@ that is running.
 To use pallet-fsmop, add the following to your `:dependencies` in `project.clj`:
 
 ```clj
-[pallet-fsmop "0.2.1"]
+[pallet-fsmop "0.2.2"]
 ```
 
 ## License

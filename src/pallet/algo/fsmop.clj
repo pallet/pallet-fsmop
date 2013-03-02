@@ -838,7 +838,8 @@ otherwise")
     "Predicate to test if operation is failed.  Returns false if the operation
 completed without error, true if the operation failed, or nil otherwise.")
   (running? [_] "Predicate to test if the operation is running.")
-  (wait-for [_] "wait on the result of the completed operation"))
+  (wait-for [_] [_ timeout-ms timeout-val]
+    "wait on the result of the completed operation"))
 
 ;; Represents a running operation
 (deftype Operation
@@ -856,11 +857,21 @@ completed without error, true if the operation failed, or nil otherwise.")
                      nil)))
   (running? [_] (not (realized? completed-promise)))
   (wait-for [_] @completed-promise)
+  (wait-for [_ timeout-ms timeout-val]
+    (deref completed-promise timeout-ms timeout-val))
   clojure.lang.IDeref
   (deref [op]
     (if-let [e (:exception @completed-promise)]
       (throw e)
-      @completed-promise)))
+      @completed-promise))
+  clojure.lang.IBlockingDeref
+  (deref [op timeout-ms timeout-val]
+    (let [v (deref completed-promise timeout-ms timeout-val)]
+      (if (= v timeout-val)
+        v
+        (if-let [e (:exception v)]
+          (throw e)
+          v)))))
 
 (defmethod print-method Operation [^Operation op writer]
   (let [state ((:state (.fsm op)))
