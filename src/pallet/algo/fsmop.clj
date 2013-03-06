@@ -764,7 +764,7 @@ the form in the given environment."
                      dissoc locals# '~env '~result
                      (->> (keys locals#)
                           (remove #(not (re-matches #".*__[0-9]+" (name %))))))
-                    (remove #(= ::killed (val%)))))]
+                    (remove #(= ::killed (val %)))))]
          (merge ~env env#)))))
 
 (defn seq-steps
