@@ -1,6 +1,6 @@
 {:dev {:dependencies [[ch.qos.logback/logback-classic "1.0.9"]]
        :warn-on-reflection true}
- :clojure-1.5 {:dependencies [[org.clojure/clojure "1.5.0-RC4"]]}
+ :clojure-1.5 {:dependencies [[org.clojure/clojure "1.5.0"]]}
  :codox {:codox {:writer codox-md.writer/write-docs
                  :output-dir "doc/0.1"}
          :dependencies [[codox-md "0.1.0"]
