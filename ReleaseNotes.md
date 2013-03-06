@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.2.3
+
+- Fix typo triggereing compilation fail with clj 1.5
+
 ## 0.2.2
 
 - Allow timeouts to Operation deref and wait-for
