@@ -873,7 +873,8 @@ completed without error, true if the operation failed, or nil otherwise.")
           (throw e)
           v)))))
 
-(defmethod print-method Operation [^Operation op writer]
+(defmethod print-method Operation
+  [^Operation op ^java.io.Writer writer]
   (let [state ((:state (.fsm op)))
         history (:history state)
         n (:fsm/name (first history))
