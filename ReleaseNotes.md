@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.2.4
+
+- Remove reflection warnings
+
 ## 0.2.3
 
 - Fix typo triggereing compilation fail with clj 1.5
