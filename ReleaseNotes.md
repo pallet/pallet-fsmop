@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.2.5
+
+- Add first fail exeception to :exception key
+
 ## 0.2.4
 
 - Remove reflection warnings
