@@ -410,10 +410,13 @@ functions to control the resulting FSM.
                         :failed
                         assoc
                         :fail-reason
-                        {:reason :failed-ops
-                         :fail-reasons (map
-                                        :fail-reason
-                                        (::failed-states op-state))}
+                        (let [reasons (map :fail-reason
+                                           (::failed-states op-state))]
+                          (merge
+                           {:reason :failed-ops
+                            :fail-reasons reasons}
+                           (when-let [exception (some :exception reasons)]
+                             {:exception exception})))
                         :result
                         (map :result
                              (::completed-states (get-op-state state))))))
