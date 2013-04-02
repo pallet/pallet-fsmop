@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.2.6
+
+- Ensure AssertionError is handled
+  Failed assertions were causing fsmop to hang.
+
 ## 0.2.5
 
 - Add first fail exeception to :exception key
