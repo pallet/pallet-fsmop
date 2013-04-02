@@ -63,7 +63,9 @@ functions to control the resulting FSM.
     (try
       (f)
       (catch Exception e
-        (logging/errorf e "Unexpected exception")))))
+        (logging/errorf e "Unexpected exception"))
+      (catch AssertionError e
+        (logging/errorf e "Unexpected assertion")))))
 
 (defonce ^{:defonce true}
   operate-executor (executor {:prefix "operate"
@@ -578,6 +580,10 @@ functions to control the resulting FSM.
                  (catch Exception e
                    (update-state
                     state :failed
+                    assoc :fail-reason {:exception e}))
+                 (catch AssertionError e
+                   (update-state
+                    state :failed
                     assoc :fail-reason {:exception e})))
                (->
                 state
@@ -621,6 +627,10 @@ functions to control the resulting FSM.
         (catch Exception e
           (update-state
            state :failed
+           assoc :fail-reason {:exception e}))
+        (catch AssertionError e
+          (update-state
+           state :failed
            assoc :fail-reason {:exception e}))))
 
     :step-fail
@@ -656,6 +666,10 @@ functions to control the resulting FSM.
                      (try
                        (run-step state next-step)
                        (catch Exception e
+                         (update-state
+                          state :failed
+                          assoc :fail-reason {:exception e}))
+                       (catch AssertionError e
                          (update-state
                           state :failed
                           assoc :fail-reason {:exception e}))))
