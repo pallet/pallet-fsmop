@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.2.7
+
+- Log exceptions in run-step-f
+
+- Move result value logging to trace level
+
 ## 0.2.6
 
 - Ensure AssertionError is handled
