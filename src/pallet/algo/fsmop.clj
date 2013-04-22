@@ -380,7 +380,8 @@ functions to control the resulting FSM.
                               (update-in [::pending-fsms] disj em)
                               (update-in [::completed-states]
                                          conj (:state-data event-data)))]
-                (logging/debugf
+                (logging/debugf "op-complete")
+                (logging/tracef
                  "op-complete result: %s"
                  (-> event-data :state-data :result))
                 (maybe-finish (-> state pop-op-state (push-op-state op-state))))
