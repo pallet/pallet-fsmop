@@ -380,7 +380,8 @@ functions to control the resulting FSM.
                               (update-in [::pending-fsms] disj em)
                               (update-in [::completed-states]
                                          conj (:state-data event-data)))]
-                (logging/debugf
+                (logging/debugf "op-complete")
+                (logging/tracef
                  "op-complete result: %s"
                  (-> event-data :state-data :result))
                 (maybe-finish (-> state pop-op-state (push-op-state op-state))))
@@ -551,7 +552,11 @@ functions to control the resulting FSM.
                      (assoc-in [op-result-fn-key] result-f))
         state (-> state pop-op-state (push-op-state op-state))]
     (execute (fn run-step-f []
-               (event :start (:state-data state))))
+               (try
+                 (event :start (:state-data state))
+                 (catch Exception e
+                   (logging/errorf e "While firing start event")
+                   (event :step-fail {:exception e})))))
     (assoc state :state-kw :running)))
 
 (defn- next-step
@@ -675,7 +680,8 @@ functions to control the resulting FSM.
                           assoc :fail-reason {:exception e}))))
     :complete (let [op-state (-> state get-op-state)]
                 (->
-                 (pop-op-state state)
+                 state
+                 pop-op-state
                  (update-state
                   :completed
                   assoc :result
