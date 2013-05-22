@@ -390,6 +390,8 @@ functions to control the resulting FSM.
                     op-state (->
                               (get-op-state state)
                               (update-in [::pending-fsms] disj em)
+                              (update-in [::completed-states]
+                                         conj (:state-data event-data))
                               (update-in [::failed-states]
                                          conj (:state-data event-data)))]
                 (maybe-finish (-> state pop-op-state (push-op-state op-state))))
