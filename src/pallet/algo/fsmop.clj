@@ -195,13 +195,14 @@ functions to control the resulting FSM.
                (case event
                  :start (update-state
                          state :failed
-                         assoc :fail-reason reason)))]
+                         merge
+                         (assoc event-data :fail-reason reason))))]
        (event-machine-config
-         (fsm-name "fail")
-         (state :init
-           (valid-transitions :failed)
-           (event-handler init)))))
-  ([] (fail nil)))
+        (fsm-name "fail")
+        (state :init
+               (valid-transitions :failed)
+               (event-handler init)))))
+  ([] (fail :fail)))
 
 (defn succeed
   "An operation primitive that does nothing but succeed or fail immediately
@@ -390,6 +391,8 @@ functions to control the resulting FSM.
                     op-state (->
                               (get-op-state state)
                               (update-in [::pending-fsms] disj em)
+                              (update-in [::completed-states]
+                                         conj (:state-data event-data))
                               (update-in [::failed-states]
                                          conj (:state-data event-data)))]
                 (maybe-finish (-> state pop-op-state (push-op-state op-state))))
@@ -556,7 +559,9 @@ functions to control the resulting FSM.
                  (event :start (:state-data state))
                  (catch Exception e
                    (logging/errorf e "While firing start event")
-                   (event :step-fail {:exception e})))))
+                   (event :step-fail
+                          (assoc (:state-data state)
+                            :fail-reason {:exception e}))))))
     (assoc state :state-kw :running)))
 
 (defn- next-step
@@ -639,14 +644,29 @@ functions to control the resulting FSM.
            assoc :fail-reason {:exception e}))))
 
     :step-fail
-    (let [history (get-in event-data [:history])]
-      (->
-       state
-       (update-in [:history] conj history)
-       (update-state
-        :step-failed
-        (partial merge-keys {})
-        (:state-data event-data))))
+    (try
+      (let [result (get-in event-data [:state-data :result])
+            history (get-in event-data [:history])
+            op-state (get-op-state event-data)
+            result-fn (get op-state op-result-fn-key)]
+        (->
+         state
+         (update-in [:history] conj history)
+         (update-state
+          :step-failed
+          (partial merge-keys {})
+          (-> event-data
+              pop-op-state
+              (push-op-state (update-in op-state [op-env-key] result-fn result))
+              :state-data))))
+      (catch Exception e
+        (update-state
+         state :failed
+         assoc :fail-reason {:exception e}))
+      (catch AssertionError e
+        (update-state
+         state :failed
+         assoc :fail-reason {:exception e})))
 
     :step-abort
     (let [history (get-in event-data [:history])]
@@ -699,7 +719,15 @@ functions to control the resulting FSM.
   [state event event-data]
   (logging/debugf "seq-step-failed event %s" event)
   (case event
-    :fail (-> state (assoc :state-kw :failed) pop-op-state)
+    :fail (let [op-state (-> state get-op-state)]
+            (->
+             state
+             pop-op-state
+             (update-state
+              :failed
+              assoc :result             ; set the result anyway
+              ((get op-state op-overall-result-key)
+               (get op-state op-env-key)))))
     :abort (-> state (assoc :state-kw :aborted) pop-op-state)))
 
 (defn- seq-on-step-failed
@@ -860,13 +888,15 @@ otherwise")
   (failed? [_]
     "Predicate to test if operation is failed.  Returns false if the operation
 completed without error, true if the operation failed, or nil otherwise.")
+  (fail-reason [_]
+    "Returns the reported failure reason.")
   (running? [_] "Predicate to test if the operation is running.")
   (wait-for [_] [_ timeout-ms timeout-val]
     "wait on the result of the completed operation"))
 
 ;; Represents a running operation
 (deftype Operation
-  [fsm completed-promise]
+    [fsm completed-promise]
   Control
   (abort [_] ((:event fsm) :abort nil))
   (status [_] ((:state fsm)))
@@ -878,23 +908,27 @@ completed without error, true if the operation failed, or nil otherwise.")
                    (if (realized? completed-promise)
                      false
                      nil)))
+  (fail-reason [_] (:status @completed-promise))
   (running? [_] (not (realized? completed-promise)))
-  (wait-for [_] @completed-promise)
+  (wait-for [_] (:result @completed-promise))
   (wait-for [_ timeout-ms timeout-val]
-    (deref completed-promise timeout-ms timeout-val))
+    (let [v (deref completed-promise timeout-ms timeout-val)]
+      (if (= v timeout-val)
+        v
+        (:result v))))
   clojure.lang.IDeref
   (deref [op]
-    (if-let [e (:exception @completed-promise)]
+    (if-let [e (:exception (:status @completed-promise))]
       (throw e)
-      @completed-promise))
+      (:result @completed-promise)))
   clojure.lang.IBlockingDeref
   (deref [op timeout-ms timeout-val]
     (let [v (deref completed-promise timeout-ms timeout-val)]
       (if (= v timeout-val)
         v
-        (if-let [e (:exception v)]
+        (if-let [e (:exception (:status v))]
           (throw e)
-          v)))))
+          (:result v))))))
 
 (defmethod print-method Operation
   [^Operation op ^java.io.Writer writer]
@@ -925,14 +959,16 @@ completed without error, true if the operation failed, or nil otherwise.")
   (let [op-state (get-op-state state)]
     (deliver
      (get-in state [:state-data op-promise-key])
-     (get-in state [:state-data :result]))))
+     {:result (get-in state [:state-data :result])
+      :status :ok})))
 
 (defn- operate-on-failed
   "on-enter function for failed and aborted states."
   [{:keys [state-kw] :as state}]
   (deliver
    (get-in state [:state-data op-promise-key])
-   (get-in state [:state-data :fail-reason])))
+   {:result (get-in state [:state-data :result])
+    :status (get-in state [:state-data :fail-reason])}))
 
 (def operate-machine-config
   (event-machine-config
