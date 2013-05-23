@@ -1,5 +1,23 @@
 # Release Notes
 
+## 0.3.0
+
+- Enable partial results on failure
+  Ensure step-fail still sets results.
+
+  Operation/deref always returns the results.
+
+  Operation/fail-reason now returns the failure reason.
+
+- Fix setting of :fail-reason in run-step
+
+- Make fail function set state-data correctly
+
+- Update to tools.logging 0.2.6
+  Removes compilation warnings.
+
+- Fix propagation of failed values in map*
+
 ## 0.2.7
 
 - Log exceptions in run-step-f

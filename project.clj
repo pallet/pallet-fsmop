@@ -1,4 +1,4 @@
-(defproject pallet-fsmop "0.2.8-SNAPSHOT"
+(defproject pallet-fsmop "0.3.0"
   :description "FSM composition"
   :url "https://github.com/pallet/pallet-fsmop"
   :license {:name "Eclipse Public License"
