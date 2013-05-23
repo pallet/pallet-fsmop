@@ -38,9 +38,10 @@
                       [_ (succeed false :reason)]
                       _)
           op (operate operation)]
-      (is (= :reason @op))
+      (is (nil? @op))
       (is (not (complete? op)))
-      (is (failed? op))))
+      (is (failed? op))
+      (is (= :reason (fail-reason op)))))
   (testing "succeed, succeed"
     (let [operation (dofsm succeed-test
                       [_ (succeed)
@@ -65,9 +66,10 @@
                       [_ (fail :bad)]
                       _)
           op (operate operation)]
-      (is (= :bad @op))
+      (is (nil? @op))
       (is (not (complete? op)))
-      (is (failed? op))))
+      (is (failed? op))
+      (is (= :bad (fail-reason op)))))
   (testing "fail, succeed"
     (let [operation (dofsm fail
                       [_ (fail)
@@ -86,7 +88,28 @@
           op (operate operation)]
       @op
       (is (not (complete? op)))
-      (is (failed? op)))))
+      (is (failed? op))))
+  (testing "return of un-evaluated expr"
+    (let [operation (dofsm fail-value
+                      [_ (fail)
+                       y (succeed)]
+                      y)
+          op (operate operation)]
+      (is (nil? @op))
+      (is (not (complete? op)))
+      (is (failed? op))
+      (is (= :fail (fail-reason op)))))
+  (testing "return of partially evaluated expr"
+    (let [operation (dofsm fail-value
+                      [y (result :ok)
+                       _ (fail)
+                       ]
+                      y)
+          op (operate operation)]
+      (is (= :ok @op))
+      (is (not (complete? op)))
+      (is (failed? op))
+      (is (= :fail (fail-reason op))))))
 
 (deftest result-test
   (testing "result"
@@ -119,7 +142,7 @@
                                _ (fail :bad)]
                               x))
           op (operate (operation :ok))]
-      (is (= :bad @op))
+      (is (= :ok @op))
       (is (not (complete? op)))
       (is (failed? op))))
   (testing "ordering of steps"
@@ -173,7 +196,8 @@
           [op t] (time-body (let [op (operate (operation 1000))]
                               (is (instance? Operation op))
                               (is (not (complete? op)))
-                              (is (= {:reason :timed-out} @op))
+                              (is (nil? @op))
+                              (is (= {:reason :timed-out} (fail-reason op)))
                               op))]
       (is (not (complete? op)))
       (is (failed? op))
@@ -233,10 +257,11 @@
                       [x (map* [(result 1) (fail :because)])]
                       x)
           op (operate operation)]
-      (is (= {:reason :failed-ops :fail-reasons [:because]}
-             @op))
+      (is (= #{1 nil} (set @op)))       ; indeterminate ordering
       (is (failed? op))
-      (is (not (complete? op)))))
+      (is (not (complete? op)))
+      (is (= {:reason :failed-ops :fail-reasons [:because]}
+             (fail-reason op)))))
   (testing "nested tasks"
     (let [operation (fn [n]
                       (dofsm map*-success
@@ -252,13 +277,16 @@
                         [x (map* (repeat n (map* [(result 1) (fail :nok)])))]
                         x))
           op (operate (operation 3))]
-      (is (= {:reason :failed-ops
-              :fail-reasons [{:reason :failed-ops, :fail-reasons [:nok]}
-                             {:reason :failed-ops, :fail-reasons [:nok]}
-                             {:reason :failed-ops, :fail-reasons [:nok]}]}
-             @op))
+      (is (= [#{1 nil} #{1 nil} #{1 nil}] ; indeterminate ordering
+             (map set @op)))
       (is (failed? op))
-      (is (not (complete? op))))))
+      (is (not (complete? op)))
+      (is (= {:reason :failed-ops
+              :fail-reasons
+              [{:reason :failed-ops, :fail-reasons [:nok]}
+               {:reason :failed-ops, :fail-reasons [:nok]}
+               {:reason :failed-ops, :fail-reasons [:nok]}]}
+             (fail-reason op))))))
 
 (deftest reduce*-test
   (testing "reduce* with result tasks"
@@ -275,7 +303,22 @@
         (let [op (operate (operation []))]
           (is (= 0 @op))
           (is (complete? op))
-          (is (not (failed? op))))))))
+          (is (not (failed? op))))))
+    (testing "failed task"
+      (let [operation (fn [s]
+                        (dofsm reduce*-test
+                          [x (reduce* (fn [res v]
+                                        (dofsm rfail
+                                          [s (succeed (< v 4) :too-big)
+                                           r (result (+ res v))]
+                                          r))
+                                      0 s)]
+                          x))]
+        (let [op (operate (operation [3 4]))]
+          (is (nil? @op))
+          (is (= :too-big (fail-reason op)))
+          (is (not (complete? op)))
+          (is (failed? op)))))))
 
 (deftest nested-dofsm-test
   (testing "nested dofsm"
@@ -295,7 +338,8 @@
                                    y)]
                               x))
           op (operate (operation :ok))]
-      (is (= :reason @op))
+      (is (nil? @op))
+      (is (= :reason (fail-reason op)))
       (is (not (complete? op)))
       (is (failed? op))))
   (testing "double nested failed dofsm"
@@ -307,7 +351,8 @@
                                    x)]
                               w))
           op (operate (operation :ok))]
-      (is (= :reason @op))
+      (is (nil? @op))
+      (is (= :reason (fail-reason op)))
       (is (not (complete? op)))
       (is (failed? op))))
   (testing "nested exception"
@@ -318,8 +363,8 @@
                                    y)]
                               x))
           op (operate (operation :ok))]
-      (is (= {:exception e} (wait-for op)))
+      (is (nil? (wait-for op)))
+      (is (= {:exception e} (fail-reason op)))
       (is (thrown? Exception @op))
-      (is (= {:exception e} (wait-for op)))
       (is (not (complete? op)))
       (is (failed? op)))))
