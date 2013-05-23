@@ -195,13 +195,14 @@ functions to control the resulting FSM.
                (case event
                  :start (update-state
                          state :failed
-                         assoc :fail-reason reason)))]
+                         merge
+                         (assoc event-data :fail-reason reason))))]
        (event-machine-config
-         (fsm-name "fail")
-         (state :init
-           (valid-transitions :failed)
-           (event-handler init)))))
-  ([] (fail nil)))
+        (fsm-name "fail")
+        (state :init
+               (valid-transitions :failed)
+               (event-handler init)))))
+  ([] (fail :fail)))
 
 (defn succeed
   "An operation primitive that does nothing but succeed or fail immediately
