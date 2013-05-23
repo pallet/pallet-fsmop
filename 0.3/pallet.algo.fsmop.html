@@ -1,0 +1,370 @@
+<html lang="en">
+  <head>
+    <title>pallet.algo.fsmop documentation</title>
+    <link href="css/default.css" type="text/css" rel="stylesheet" />
+    <link href="css/codox-md.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/page_effects.js"></script>
+  </head>
+  <body>
+    <header>
+    <div data-scrollspy="scrollspy" class="topbar">
+      <div class="topbar-inner">
+        <div class="container">
+          <a href="/" class="brand">Pallet</a>
+          <ul class="nav">
+            <li class=""><a href="/doc">Documentation</a></li>
+            <li class=""><a href="/news">News</a></li>
+            <li class=""><a href="/blog">Blog</a></li>
+            <li class=""><a href="https://github.com/pallet/pallet">Code</a></li>
+            <li class=""><a href="/services">Services</a></li>
+            <li class=""><a href="/support">Support</a></li>
+            <li class=""><a href="/contact">Contact</a></li>
+          </ul>
+          <form action="http://www.google.com/search" method="get" class="pull-right">
+            <input placeholder="Search" value="" maxlength="255" name="q" type="text" />
+            <input value="palletops.com" type="hidden" name="sitesearch" />
+          </form>
+        </div>
+      </div>
+    </div>
+      <div id="header">
+        <h1><a href="http://palletops.com"><span class="project-title">Pallet-fsmop 0.3.1-SNAPSHOT API documentation</span></a></h1>
+      </div>
+    </header>
+    <navigation>
+      <div id="namespaces" class="sidebar">
+        <h3>Namespaces</h3>
+        <ul class="ns-links">
+          <li class="ns-list"><a class="ns-link ns-name" href="pallet.algo.fsmop.html">pallet.algo.fsmop</a></li>
+        </ul>
+      </div>
+      <div id="vars" class="sidebar">
+        <h3>Public Vars</h3>
+        <ul class="ns-var-links">
+          <li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var--%3EOperation">-&gt;Operation</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-Control">Control</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-abort">abort</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-complete%3F">complete?</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-default-init-event-handler">default-init-event-handler</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-delay-for">delay-for</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-dofsm">dofsm</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-eval-in-env-fn">eval-in-env-fn</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-execute">execute</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-execute-after">execute-after</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-fail">fail</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-fail-reason">fail-reason</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-failed%3F">failed?</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-get-op-state">get-op-state</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-map*">map*</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-merge-fsms">merge-fsms</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-op-state-stack-depth">op-state-stack-depth</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-operate">operate</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-pop-op-state">pop-op-state</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-push">push</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-push-op-state">push-op-state</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-reduce*">reduce*</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-report-operation">report-operation</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-result">result</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-running%3F">running?</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-seq-steps">seq-steps</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-set-in-env-fn">set-in-env-fn</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-status">status</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-succeed">succeed</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-timeout">timeout</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-update-state">update-state</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.algo.fsmop.html#var-wait-for">wait-for</a></li>
+        </ul>
+      </div>
+    </navigation>
+    <article>
+      <div id="content" class="namespace-docs">
+        <h2 class="namespace-title">pallet.algo.fsmop documentation</h2>
+        <div class="doc"><p>Operations</p>
+
+<p>Operate provides orchestration. It assumes that operations can succeed, fail,
+time-out or be aborted. It assumes some things happen in parallel, and that some
+things need to be sequenced.</p>
+
+<h2>Operation primitive FSM contract</h2>
+
+<p>An operation primitive must produce a FSM specification.</p>
+
+<p>The FSM must respond to the :start event in it's initial state. The event data
+sent with the :start event will be the current global state. The default initial
+state is :init. The default response for the :start event in the :init state is
+to set the primitive's :state-data to the global state, and to transition to
+the :running state.</p>
+
+<p>The FSM must have a :completed and a :failed state.</p>
+
+<p>It must respond to the :abort event, which is sent on a user initiated abort
+of an operation. The :abort event should cause the FSM to end in the :aborted
+state.</p>
+
+<p>The :init, :completed, :aborted and :failed states will be implicitly added if
+not declared.</p>
+
+<p>The result should be placed on the :result key of the state-data.</p>
+
+<p>A failure reason should be placed on the :fail-reason key of the state-data.</p>
+
+<p>State event functions (on-enter and on-exit) should return true if they do
+anything to change the state of the FSM, and further event functions should not
+be called for the transition.</p>
+
+<h2>The `operation` FSM comprehension</h2>
+
+<p>An expression under the <code>operation</code> FSM comprehension results in a compound
+FSM. It is returned as a function, that takes a state, and returns a map of
+functions to control the resulting FSM.</p>
+</div>
+        <div class="ns-vars">
+          <div class="public">
+            <h3><a id="var--%3EOperation" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L898">-&gt;Operation</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[fsm completed-promise]</div>
+            
+            
+            <div class="doc"><p>Positional factory function for class pallet.algo.fsmop.Operation.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-Control" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L881">Control</a></h3>
+            <h4 class="var-type var" id="var-type">var</h4>
+            
+            
+            
+            <div class="doc"><p>Operation control protocol.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-abort" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/#L">abort</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[_]</div>
+            
+            
+            <div class="doc"><p>Abort the operation.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-complete%3F" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/#L">complete?</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[_]</div>
+            
+            
+            <div class="doc"><p>Predicate to test if operation is complete.  Returns false if
+the operation failed with an error, true if the operation succeeded, or nil
+otherwise</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-default-init-event-handler" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L102">default-init-event-handler</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[state event event-data]</div>
+            
+            
+            <div class="doc"><p>Default event handler for the :init state</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-delay-for" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L245">delay-for</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[delay delay-units]</div>
+            
+            
+            <div class="doc"><p>An operation primitive that does nothing for the given <code>delay</code>. This uses the
+stateful-fsm's timeout mechanism. Not the timeout primitive. The primitive
+transitions to :completed after the given delay.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-dofsm" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L845">dofsm</a></h3>
+            <h4 class="var-type macro" id="var-type">macro</h4>
+            <div class="usage">[op-name steps result]</div>
+            
+            
+            <div class="doc"><p>A comprehension that results in a compound FSM specification.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-eval-in-env-fn" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L779">eval-in-env-fn</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[form syms]</div>
+            
+            
+            <div class="doc"><p>Give a form, return a function of a single <code>env</code> argument and that evaluates
+the form in the given environment.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-execute" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L74">execute</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[f]</div>
+            
+            
+            <div class="doc"><p>Execute a function in the operate-executor thread pool.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-execute-after" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L85">execute-after</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[f delay delay-units]</div>
+            
+            
+            <div class="doc"><p>Execute a function after a specified delay in the scheduled-executor thread
+pool. Returns a ScheduledFuture.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-fail" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L191">fail</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[reason]</div><div class="usage">[]</div>
+            
+            
+            <div class="doc"><p>An operation primitive that does nothing but fail immediately.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-fail-reason" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/#L">fail-reason</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[_]</div>
+            
+            
+            <div class="doc"><p>Returns the reported failure reason.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-failed%3F" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/#L">failed?</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[_]</div>
+            
+            
+            <div class="doc"><p>Predicate to test if operation is failed.  Returns false if the operation
+completed without error, true if the operation failed, or nil otherwise.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-get-op-state" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L179">get-op-state</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[state]</div>
+            
+            
+            <div class="doc"><p>Get the current <code>op-state</code> map off the ::opt-state key in the FSM's <code>state</code>
+map.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-map*" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L319">map*</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[fsm-configs]</div>
+            
+            
+            <div class="doc"><p>Execute a set of fsms</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-merge-fsms" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L150">merge-fsms</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[&amp; fsm-configs]</div>
+            
+            
+            <div class="doc"><p>Merge operation primitve FSM's.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-op-state-stack-depth" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L185">op-state-stack-depth</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[state]</div>
+            
+            
+            <div class="doc"><p>op-state stack depth</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-operate" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L988">operate</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[operation]</div>
+            
+            
+            <div class="doc"><p>Start the specified <code>operation</code> on the given arguments. The call returns an
+object that implements the Control protocol.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-pop-op-state" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L174">pop-op-state</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[state]</div>
+            
+            
+            <div class="doc"><p>Pop a <code>op-state</code> map off the ::opt-state key in the FSM's <code>state</code> map.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-push" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L164">push</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[stack v]</div>
+            
+            
+            <div class="doc"><p>Push a value onto a stack, using a vector if the stack is nil.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-push-op-state" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L169">push-op-state</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[state op-state]</div>
+            
+            
+            <div class="doc"><p>Push a new <code>op-state</code> map onto the ::opt-state key in the FSM's <code>state</code> map.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-reduce*" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L851">reduce*</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[f init-value s]</div>
+            
+            
+            <div class="doc"><p>A reduce function where the passed reducing function <code>f</code> should return a FSM
+configuration, whose result when executed, will be passed to the next call of
+the reducing function.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-report-operation" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L1042">report-operation</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[operation &amp; {:keys [env steps history], :as options}]</div>
+            
+            
+            <div class="doc"><p>Print a report on the status of an operation.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-result" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L229">result</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[value]</div>
+            
+            
+            <div class="doc"><p>An operation primitive that does nothing but succeed immediately with the
+specified result <code>value</code>.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-running%3F" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/#L">running?</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[_]</div>
+            
+            
+            <div class="doc"><p>Predicate to test if the operation is running.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-seq-steps" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L821">seq-steps</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[steps result &amp;env]</div>
+            
+            
+            <div class="doc"><p>Takes FSM comprehension forms and translates them</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-set-in-env-fn" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L798">set-in-env-fn</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[expr &amp;env]</div>
+            
+            
+            <div class="doc"><p>Give an expression that is a valid lhs in a binding, return a function of an
+<code>env</code> argument and a value that assigns the results of destructuring into
+<code>env</code>.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-status" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/#L">status</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[_]</div>
+            
+            
+            <div class="doc"><p>Return the status of the operation.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-succeed" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L207">succeed</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[flag fail-reason]</div><div class="usage">[flag]</div><div class="usage">[]</div>
+            
+            
+            <div class="doc"><p>An operation primitive that does nothing but succeed or fail immediately
+based on the passed flag. The default is to succeed.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-timeout" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L276">timeout</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[fsm-config delay delay-units]</div>
+            
+            
+            <div class="doc"><p>Execute an expression with a timeout. The timeout is applied to each
+state. Any transition out of a state will cancel the timeout.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-update-state" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/src/pallet/algo/fsmop.clj#L94">update-state</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[state state-kw f &amp; args]</div>
+            
+            
+            <div class="doc"><p>Convenience update function.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-wait-for" class="source var-name" href="https://github.com/pallet/pallet-fsmop/blob/develop/#L">wait-for</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[_]</div><div class="usage">[_ timeout-ms timeout-val]</div>
+            
+            
+            <div class="doc"><p>wait on the result of the completed operation</p>
+</div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </body>
+
+</html>
