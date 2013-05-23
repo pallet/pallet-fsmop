@@ -559,7 +559,9 @@ functions to control the resulting FSM.
                  (event :start (:state-data state))
                  (catch Exception e
                    (logging/errorf e "While firing start event")
-                   (event :step-fail {:exception e})))))
+                   (event :step-fail
+                          (assoc (:state-data state)
+                            :fail-reason {:exception e}))))))
     (assoc state :state-kw :running)))
 
 (defn- next-step
