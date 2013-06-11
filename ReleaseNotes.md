@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.3.1
+
+- Catch Throwable to prevent hangs
+
 ## 0.3.0
 
 - Enable partial results on failure
