@@ -65,7 +65,9 @@ functions to control the resulting FSM.
       (catch Exception e
         (logging/errorf e "Unexpected exception"))
       (catch AssertionError e
-        (logging/errorf e "Unexpected assertion")))))
+        (logging/errorf e "Unexpected assertion"))
+      (catch Throwable e
+        (logging/errorf e "Unexpected error")))))
 
 (defonce ^{:defonce true}
   operate-executor (executor {:prefix "operate"
@@ -587,11 +589,7 @@ functions to control the resulting FSM.
              (if-let [next-step (next-step state)]
                (try
                  (run-step state next-step)
-                 (catch Exception e
-                   (update-state
-                    state :failed
-                    assoc :fail-reason {:exception e}))
-                 (catch AssertionError e
+                 (catch Throwable e
                    (update-state
                     state :failed
                     assoc :fail-reason {:exception e})))
@@ -634,11 +632,7 @@ functions to control the resulting FSM.
               pop-op-state
               (push-op-state (update-in op-state [op-env-key] result-fn result))
               :state-data)))
-        (catch Exception e
-          (update-state
-           state :failed
-           assoc :fail-reason {:exception e}))
-        (catch AssertionError e
+        (catch Throwable e
           (update-state
            state :failed
            assoc :fail-reason {:exception e}))))
@@ -659,11 +653,7 @@ functions to control the resulting FSM.
               pop-op-state
               (push-op-state (update-in op-state [op-env-key] result-fn result))
               :state-data))))
-      (catch Exception e
-        (update-state
-         state :failed
-         assoc :fail-reason {:exception e}))
-      (catch AssertionError e
+      (catch Throwable e
         (update-state
          state :failed
          assoc :fail-reason {:exception e})))
@@ -690,11 +680,7 @@ functions to control the resulting FSM.
     :run-next-step (let [next-step (next-step state)]
                      (try
                        (run-step state next-step)
-                       (catch Exception e
-                         (update-state
-                          state :failed
-                          assoc :fail-reason {:exception e}))
-                       (catch AssertionError e
+                       (catch Throwable e
                          (update-state
                           state :failed
                           assoc :fail-reason {:exception e}))))
